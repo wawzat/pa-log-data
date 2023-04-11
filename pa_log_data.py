@@ -27,7 +27,11 @@ session.mount('https://', adapter)
 
 interval_duration = 1200
 file_name = 'pa_log_test.csv'
-output_pathname = config.matrix5 + os.path.sep + file_name
+if sys.platform == 'win32':
+    output_pathname = os.path.join(config.matrix5, file_name)
+elif sys.platform == 'linux':
+    cwd = os.getcwd()
+    output_pathname = os.path.join(cwd, file_name)
 
 # set the name of the Google Sheets document
 document_name = 'pa_data'
