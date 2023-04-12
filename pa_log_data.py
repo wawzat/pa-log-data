@@ -92,8 +92,8 @@ def get_data(url, cols):
     #df['time_stamp'] = df['time_stamp'].astype(str)
 
     df = df[cols]
-    print(df)
-    print(" ")
+    #print(df)
+    #print(" ")
     return df
 
 def write_data(df, write_csv):
