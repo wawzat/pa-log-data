@@ -26,6 +26,7 @@ session.mount('http://', adapter)
 session.mount('https://', adapter)
 
 interval_duration = 1200
+write_csv = False
 file_name = 'pa_log_test.csv'
 if sys.platform == 'win32':
     output_pathname = os.path.join(config.matrix5, file_name)
@@ -95,17 +96,18 @@ def get_data(url, cols):
     print(" ")
     return df
 
-def write_data(df):
+def write_data(df, write_csv):
     # append the data to Google Sheets 
     try:
         sheet.append_rows(df.values.tolist())
-        df.to_csv(output_pathname, index=True, header=True)
+        if write_csv:
+            df.to_csv(output_pathname, index=True, header=True)
     except Exception as e:
         print(e)
         logging.exception("write_data error:\n%s" % e)
 
 df = get_data(url, cols)
-write_data(df)
+write_data(df, write_csv)
 
 interval_start = datetime.now()
 while True:
@@ -114,7 +116,7 @@ while True:
         interval_td = datetime.now() - interval_start
         if interval_td.total_seconds() >= interval_duration:
             df = get_data(url, cols)
-            write_data(df)
+            write_data(df, write_csv)
             interval_start = datetime.now()
     except KeyboardInterrupt:
         sys.exit()
