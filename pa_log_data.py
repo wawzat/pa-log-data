@@ -76,9 +76,9 @@ def get_data(url, cols):
     except Exception as e:
         print(e)
         logging.exception("get_data error:\n%s" % e)
-        df = 0
+        df = None
         return df
-    if response == 200:
+    if response.ok:
         url_data = response.content
         json_data = json.loads(url_data)
         df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
@@ -98,7 +98,7 @@ def get_data(url, cols):
         #print(df)
         #print(" ")
     else:
-        df = 0
+        df = None
     return df
 
 def write_data(df, write_csv):
@@ -112,7 +112,10 @@ def write_data(df, write_csv):
         logging.exception("write_data error:\n%s" % e)
 
 df = get_data(url, cols)
-write_data(df, write_csv)
+if df.empty:
+    print('URL Response Error')
+else:
+    write_data(df, write_csv)
 
 interval_start = datetime.now()
 while True:
@@ -121,7 +124,7 @@ while True:
         interval_td = datetime.now() - interval_start
         if interval_td.total_seconds() >= interval_duration:
             df = get_data(url, cols)
-            if df != 0:
+            if not df.empty:
                 write_data(df, write_csv)
             interval_start = datetime.now()
     except KeyboardInterrupt:
