@@ -82,7 +82,7 @@ def get_data(url, cols):
         url_data = response.content
         json_data = json.loads(url_data)
         df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
-        df['time_stamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        df['time_stamp'] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
 
         # convert the float values to strings
         df['latitude'] = df['latitude'].astype(str)
@@ -104,7 +104,7 @@ def get_data(url, cols):
 def write_data(df, write_csv):
     # append the data to Google Sheets 
     try:
-        sheet.append_rows(df.values.tolist())
+        sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
         if write_csv:
             df.to_csv(output_pathname, index=True, header=True)
     except Exception as e:
