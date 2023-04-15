@@ -76,24 +76,29 @@ def get_data(url, cols):
     except Exception as e:
         print(e)
         logging.exception("get_data error:\n%s" % e)
-    url_data = response.content
-    json_data = json.loads(url_data)
-    df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
-    df['time_stamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        df = 0
+        return df
+    if response == 200:
+        url_data = response.content
+        json_data = json.loads(url_data)
+        df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
+        df['time_stamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # convert the float values to strings
-    df['latitude'] = df['latitude'].astype(str)
-    df['longitude'] = df['longitude'].astype(str)
-    #df['humidity'] = df['humidity'].astype(str)
-    #df['pm1.0_atm_a'] = df['pm1.0_atm_a'].astype(str)
-    #df['pm1.0_atm_b'] = df['pm1.0_atm_b'].astype(str)
-    #df['pm2.5_atm_a'] = df['pm2.5_atm_a'].astype(str)
-    #df['pm2.5_atm_b'] = df['pm2.5_atm_b'].astype(str)
-    #df['time_stamp'] = df['time_stamp'].astype(str)
+        # convert the float values to strings
+        df['latitude'] = df['latitude'].astype(str)
+        df['longitude'] = df['longitude'].astype(str)
+        #df['humidity'] = df['humidity'].astype(str)
+        #df['pm1.0_atm_a'] = df['pm1.0_atm_a'].astype(str)
+        #df['pm1.0_atm_b'] = df['pm1.0_atm_b'].astype(str)
+        #df['pm2.5_atm_a'] = df['pm2.5_atm_a'].astype(str)
+        #df['pm2.5_atm_b'] = df['pm2.5_atm_b'].astype(str)
+        #df['time_stamp'] = df['time_stamp'].astype(str)
 
-    df = df[cols]
-    #print(df)
-    #print(" ")
+        df = df[cols]
+        #print(df)
+        #print(" ")
+    else:
+        df = 0
     return df
 
 def write_data(df, write_csv):
@@ -116,7 +121,8 @@ while True:
         interval_td = datetime.now() - interval_start
         if interval_td.total_seconds() >= interval_duration:
             df = get_data(url, cols)
-            write_data(df, write_csv)
+            if df != 0:
+                write_data(df, write_csv)
             interval_start = datetime.now()
     except KeyboardInterrupt:
         sys.exit()
