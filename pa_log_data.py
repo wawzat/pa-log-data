@@ -26,15 +26,12 @@ adapter = HTTPAdapter(max_retries=retry)
 session.headers.update({'X-API-Key': config.PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
-
 file_name: str = 'pa_log_test.csv'
 if sys.platform == 'win32':
     output_pathname: str = Path(config.matrix5, file_name)
 elif sys.platform == 'linux':
     cwd: str = Path.cwd()
     output_pathname: str = Path(cwd, file_name)
-
-
 # set the credentials for the Google Sheets service account
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive']
@@ -182,16 +179,12 @@ def process_data(document_name):
             format='%m/%d/%Y %H:%M:%S'
         )
         df_summarized.set_index('time_stamp', inplace=True)
-        df_summarized = df_summarized.groupby('name')
-        df_summarized= df_summarized.resample('1H').mean(numeric_only=True)
+        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         df_summarized.reset_index(inplace=True)
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
-        df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce')
-        df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a'])
-        df_summarized['pm2.5_atm_a'] = df_summarized['pm2.5_atm_a'].astype(float)
-        df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce')
-        df_summarized = df_summarized.dropna(subset=['pm2.5_atm_b'])
-        df_summarized['pm2.5_atm_b'] = df_summarized['pm2.5_atm_b'].astype(float)
+        df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
+        df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
+        df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
         df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
         # open the Google Sheets output worksheet
