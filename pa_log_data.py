@@ -34,7 +34,8 @@ elif sys.platform == 'linux':
     output_pathname: str = Path(cwd, file_name)
 # set the credentials for the Google Sheets service account
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive']
+                    'https://www.googleapis.com/auth/drive'
+                    ]
 creds = ServiceAccountCredentials.from_json_keyfile_name(config.gspread_service_account_json_path, scope)
 client = gspread.authorize(creds)
 
@@ -71,6 +72,7 @@ def get_data(bbox: List[float]) -> pd.DataFrame:
         df = df[cols]
     else:
         df = df=pd.DataFrame()
+        logging.exception("get_data() response not ok:\n%s" % e)
     return df
 
 
@@ -121,9 +123,6 @@ def calc_aqi(PM2_5):
             aqi_cat = 'hazardous'
         elif (PM2_5 >= 500.5):
             aqi_cat = 'beyond_aqi'
-        else:
-            print(" ")
-            print("PM2_5: " + str(PM2_5))
         Ihigh = pm25_aqi.get(aqi_cat)[1]
         Ilow = pm25_aqi.get(aqi_cat)[0]
         Chigh = pm25_aqi.get(aqi_cat)[3]
@@ -137,7 +136,6 @@ def calc_aqi(PM2_5):
 
 
 def calc_epa(PM2_5, RH):
-    # 2020 Version
     #0-250 ug/m3 range (>250 may underestimate true PM2.5):
     #PM2.5 (µg/m³) = 0.534 x PA(cf_1) - 0.0844 x RH + 5.604
     #PM2_5_epa = 0.534 * PM2_5 - 0.0844 * RH + 5.604
@@ -186,7 +184,11 @@ def process_data(document_name):
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
+        #Clean data when PM 2.5 ATM channels differ by 5 or .7
         df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
+        df_summarized.drop(((
+                (df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']).abs()
+                ) / ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + .00001) / 2)) < 0.7)
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
@@ -207,7 +209,6 @@ def sensor_health(df, document_name, out_worksheet_health_name):
         ) / ((df_good['pm2.5_atm_a'] + df_good['pm2.5_atm_b']) / 2)) >= 0.7]
     df_grouped = df.groupby('name')
     df_good_grouped = df_good.groupby('name')
-    #sensor_health_list.insert(0, ['NAME', 'CONFIDENCE', 'MAX ERROR'])
     for k, v in df_grouped:
         try:
             pct_good = (df_grouped.get_group(k).shape[0] - df_good_grouped.get_group(k).shape[0]) / df_grouped.get_group(k).shape[0]
