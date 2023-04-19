@@ -280,7 +280,7 @@ def main():
                         write_data(df, client, config.document_name, config.bbox_dict.get(regional_key)[1], config.write_csv)
                     sleep(10)
                 regional_interval_start = datetime.now()
-            if process_interval_td.total_seconds() > config.process_interval_duration
+            if process_interval_td.total_seconds() > config.process_interval_duration:
                 df = process_data(config.document_name)
                 if len(df.index) > 0:
                     sensor_health(df, config.document_name, config.out_worksheet_health_name)
