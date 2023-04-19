@@ -7,7 +7,9 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import json
+#import simplejson as json
 import pandas as pd
+#import decimal
 import os
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
@@ -25,7 +27,8 @@ session.headers.update({'X-API-Key': config.PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
 
-interval_duration = 1200
+local_interval_duration = 1200
+regional_interval_duration = 3600
 write_csv = False
 file_name = 'pa_log_test.csv'
 if sys.platform == 'win32':
@@ -37,8 +40,10 @@ elif sys.platform == 'linux':
 # set the name of the Google Sheets document
 document_name = 'pa_data'
 
-# set the name of the worksheet in the Google Sheets document
-worksheet_name = 'TV'
+# set the names of the worksheets in the Google Sheets document
+local_worksheet_name = 'TV'
+regional_keys = ['OC', 'RS', 'CEP']
+
 
 # set the credentials for the Google Sheets service account
 scope = ['https://spreadsheets.google.com/feeds',
@@ -46,42 +51,41 @@ scope = ['https://spreadsheets.google.com/feeds',
 creds = ServiceAccountCredentials.from_json_keyfile_name(config.gspread_service_account_json_path, scope)
 client = gspread.authorize(creds)
 
-# open the Google Sheets worksheet
-sheet = client.open(document_name).worksheet(worksheet_name)
 
-root_url = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age=0&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+def get_data(bbox):
+    root_url = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age=1100&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+    params = {
+        'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
+                "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
+                "pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,"
+                "0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count",
+        'nwlng': bbox[0],
+        'selat': bbox[1],
+        'selng': bbox[2],
+        'nwlat': bbox[3]
+    }
+    url = root_url.format(**params)
 
-bbox = config.bbox
-
-params = {
-    'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
-              "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
-              "pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,"
-              "0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count",
-    'nwlng': bbox[0],
-    'selat': bbox[1],
-    'selng': bbox[2],
-    'nwlat': bbox[3]
-}
-url = root_url.format(**params)
-
-cols = params['fields'].split(',')
-cols.insert(0, 'sensor_index')
-cols.insert(0, 'time_stamp')
-
-
-def get_data(url, cols):
+    cols = params['fields'].split(',')
+    cols.insert(0, 'sensor_index')
+    cols.insert(0, 'time_stamp')
     try:
         response = session.get(url)
     except Exception as e:
         print(e)
         logging.exception("get_data error:\n%s" % e)
-        df = None
+        df = pd.DataFrame()
         return df
     if response.ok:
         url_data = response.content
         json_data = json.loads(url_data)
+        #for i, row in enumerate(json_data['data']):
+            #json_data['data'][i] = [np.nan if x is None else x for x in row]
+        #print(json_data)
+        #print(url_data)
+        #print(" ")
         df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
+        df = df.fillna('')
         df['time_stamp'] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
 
         # convert the float values to strings
@@ -98,10 +102,12 @@ def get_data(url, cols):
         #print(df)
         #print(" ")
     else:
-        df = None
+        df = df=pd.DataFrame()
     return df
 
-def write_data(df, write_csv):
+def write_data(df, client, document_name, worksheet_name, write_csv):
+    # open the Google Sheets worksheet
+    sheet = client.open(document_name).worksheet(worksheet_name)
     # append the data to Google Sheets 
     try:
         sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
@@ -111,21 +117,31 @@ def write_data(df, write_csv):
         print(e)
         logging.exception("write_data error:\n%s" % e)
 
-df = get_data(url, cols)
-if df.empty:
-    print('URL Response Error')
-else:
-    write_data(df, write_csv)
 
-interval_start = datetime.now()
+for k, v in config.bbox_dict.items():
+    df = get_data(config.bbox_dict.get(k)[0])
+    if df.empty:
+        print('URL Response Error')
+    else:
+        write_data(df, client, document_name, config.bbox_dict.get(k)[1], write_csv)
+
+local_interval_start = datetime.now()
+regional_interval_start = datetime.now()
 while True:
     try:
         sleep(1)
-        interval_td = datetime.now() - interval_start
-        if interval_td.total_seconds() >= interval_duration:
-            df = get_data(url, cols)
+        local_interval_td = datetime.now() - local_interval_start
+        regional_interval_td = datetime.now() - regional_interval_start
+        if local_interval_td.total_seconds() >= local_interval_duration:
+            df = get_data(config.bbox_dict.get("TV")[0])
             if not df.empty:
-                write_data(df, write_csv)
-            interval_start = datetime.now()
+                write_data(df, client, document_name, local_worksheet_name, write_csv)
+            local_interval_start = datetime.now()
+        if regional_interval_td.total_seconds() > regional_interval_duration:
+            for regional_key in regional_keys:
+                df = get_data(config.bbox_dict.get(regional_key)[0]) 
+                if not df.empty:
+                    write_data(df, client, document_name, config.bbox_dict.get(regional_key)[1], write_csv)
+            regional_interval_start = datetime.now()
     except KeyboardInterrupt:
         sys.exit()
