@@ -123,7 +123,7 @@ for k, v in config.bbox_dict.items():
     if df.empty:
         print('URL Response Error')
     else:
-        write_data(df, client, document_name, config.bbox_dict.get(k)[1], write_csv)
+        write_data(df, client, document_name, config.bbox_dict.get(v)[1], write_csv)
 
 local_interval_start = datetime.now()
 regional_interval_start = datetime.now()
