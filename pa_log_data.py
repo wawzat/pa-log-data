@@ -162,6 +162,10 @@ def process_data(document_name, client):
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
+        print(" ")
+        print("in sheet", k)
+        print(df)
+        print(" ")
         if k == "TV":
             df_tv = df.copy()
         df_proc = df.copy()
@@ -287,6 +291,7 @@ def main():
                 regional_interval_start = datetime.now()
             if process_interval_td.total_seconds() > config.process_interval_duration:
                 df = process_data(config.document_name, client)
+                process_interval_td = datetime.now() - process_interval_start
                 print("process step finished")
                 if len(df.index) > 0:
                     sensor_health(df, config.document_name, config.out_worksheet_health_name)
