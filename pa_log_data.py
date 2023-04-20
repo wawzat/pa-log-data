@@ -155,7 +155,7 @@ def calc_epa(PM2_5, RH):
         logging.exception("calc_epa() error:\n%s" % e)
 
 
-def process_data(document_name. client):
+def process_data(document_name, client):
     for k, v in config.bbox_dict.items():
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
