@@ -155,7 +155,7 @@ def calc_epa(PM2_5, RH):
         logging.exception("calc_epa() error:\n%s" % e)
 
 
-def process_data(document_name):
+def process_data(document_name. client):
     for k, v in config.bbox_dict.items():
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
@@ -196,6 +196,10 @@ def process_data(document_name):
             ].index,
             inplace=True
         )
+        print(" ")
+        print("df_summarized")
+        print(df_summarized)
+        print(" ")
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
@@ -282,7 +286,7 @@ def main():
                     sleep(10)
                 regional_interval_start = datetime.now()
             if process_interval_td.total_seconds() > config.process_interval_duration:
-                df = process_data(config.document_name)
+                df = process_data(config.document_name, client)
                 print("process step finished")
                 if len(df.index) > 0:
                     sensor_health(df, config.document_name, config.out_worksheet_health_name)
