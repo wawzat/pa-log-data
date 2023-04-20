@@ -283,6 +283,7 @@ def main():
                 regional_interval_start = datetime.now()
             if process_interval_td.total_seconds() > config.process_interval_duration:
                 df = process_data(config.document_name)
+                print("process step finished")
                 if len(df.index) > 0:
                     sensor_health(df, config.document_name, config.out_worksheet_health_name)
                     regional_stats(config.document_name)
