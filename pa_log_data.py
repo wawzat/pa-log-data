@@ -186,9 +186,12 @@ def process_data(document_name):
         df_summarized = df_summarized.fillna('')
         #Clean data when PM 2.5 ATM channels differ by 5 or .7
         df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
-        df_summarized.drop(((
-                (df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']).abs()
-                ) / ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + .00001) / 2)) < 0.7)
+        df_summarized.drop(
+            df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) /
+                ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) < 0.7
+            ].index,
+            inplace=True
+        )
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
