@@ -18,7 +18,9 @@ import logging
 from typing import Dict, List
 import config
 
-logging.basicConfig(filename='error.log')
+format_string = "%(name)s - %(asctime)s : %(message)s"
+logging.basicConfig(filename='error.log',
+                    format = format_string)
 
 session = requests.Session()
 retry = Retry(connect=3, backoff_factor=0.9)
@@ -141,9 +143,9 @@ def calc_epa(PM2_5, RH):
     #PM2_5_epa = 0.534 * PM2_5 - 0.0844 * RH + 5.604
     try: 
         if PM2_5 <= 343:
-            PM2_5_epa = 0.52 * PM2_5 - 0.086 * RH + 5.75
+            PM2_5_epa = 0.52 * float(PM2_5) - 0.086 * float(RH) + 5.75
         elif PM2_5 > 343:
-            PM2_5_epa = 0.46 * PM2_5 + 3.93 * 10 ** -4 * PM2_5 ** 2 + 2.97
+            PM2_5_epa = 0.46 * float(PM2_5) + 3.93 * 10 ** -4 * float(PM2_5) ** 2 + 2.97
         else:
             PM2_5_epa = 0
         return PM2_5_epa
