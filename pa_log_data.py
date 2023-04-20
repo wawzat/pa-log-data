@@ -194,12 +194,12 @@ def process_data(document_name, client):
         df_summarized = df_summarized.fillna('')
         #Clean data when PM 2.5 ATM channels differ by 5 or .7
         df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
-        df_summarized.drop(
-            df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) /
-                ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) < 0.7
-            ].index,
-            inplace=True
-        )
+        #df_summarized.drop(
+            #df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) /
+                #((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) < 0.7
+            #].index,
+            #inplace=True
+        #)
         print(" ")
         print("df_summarized")
         print(df_summarized)
