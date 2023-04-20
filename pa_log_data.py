@@ -162,10 +162,6 @@ def process_data(document_name, client):
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
-        print(" ")
-        print("in sheet", k)
-        print(df)
-        print(" ")
         if k == "TV":
             df_tv = df.copy()
         df_proc = df.copy()
@@ -200,10 +196,6 @@ def process_data(document_name, client):
             ].index,
             inplace=True
         )
-        print(" ")
-        print("df_summarized")
-        print(df_summarized)
-        print(" ")
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
@@ -265,7 +257,7 @@ def main():
     for k, v in config.bbox_dict.items():
         df = get_data(config.bbox_dict.get(k)[0])
         if df.empty:
-            print('URL Response Error')
+            pass
         else:
             write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], config.write_csv)
     local_interval_start = datetime.now()
@@ -292,7 +284,6 @@ def main():
             if process_interval_td.total_seconds() > config.process_interval_duration:
                 df = process_data(config.document_name, client)
                 process_interval_td = datetime.now() - process_interval_start
-                print("process step finished")
                 if len(df.index) > 0:
                     sensor_health(df, config.document_name, config.out_worksheet_health_name)
                     regional_stats(config.document_name)
