@@ -23,7 +23,7 @@ logging.basicConfig(filename='error.log',
                     format = format_string)
 
 session = requests.Session()
-retry = Retry(connect=3, backoff_factor=0.9)
+retry = Retry(connect=5, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
 session.headers.update({'X-API-Key': config.PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
