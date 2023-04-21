@@ -211,7 +211,7 @@ def process_data(document_name, client):
                 '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count',
                 'Ipm25', 'pm25_epa'
                 ]
-        df_summarized.rename(cols, axis=1)
+        df_summarized = df_summarized[cols]
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
