@@ -197,7 +197,7 @@ def process_data(document_name, client):
             inplace=True
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
-        cols = {'name': 'name', 'time_stamp': 'time_stamp', 'sensor_index': 'sensor_index', 'latitude': 'latitdue', 'longitude': 'longitude', 'altitude': 'altitude',
+        cols = {'time_stamp': 'time_stamp', 'sensor_index': 'sensor_index', 'name': 'name', 'latitude': 'latitdue', 'longitude': 'longitude', 'altitude': 'altitude',
                 'rssi': 'rssi', 'uptime': 'uptime', 'humidity': 'humidity', 'temperature': 'temperature', 'pressure': 'pressure',
                 'pm1.0_atm_a': 'pm1.0_atm_a', 'pm1.0_atm_b': 'pm1.0_atm_b', 'pm2.5_atm_a': 'pm2.5_atm_a', 'pm2.5_atm_b': 'pm2.5_atm_b', 'pm10.0_atm_a': 'pm10.0_atm_a', 'pm10.0_atm_b': 'pm10.0_atm_b',
                 'pm1.0_cf_1_a': 'pm1.0_cf_1_a', 'pm1.0_cf_1_b': 'pm1.0_cf_1_b', 'pm2.5_cf_1_a': 'pm2.5_cf_1_a', 'pm2.5_cf_1_b': 'pm2.5_cf_1_b', 'pm10.0_cf_1_a': 'pm10.0_cf_1_a', 'pm10.0_cf_1_b': 'pm10.0_cf_1_b',
