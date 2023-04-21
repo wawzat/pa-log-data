@@ -196,10 +196,19 @@ def process_data(document_name, client):
             ].index,
             inplace=True
         )
+        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
+        cols = {'name': 'name', 'time_stamp': 'time_stamp', 'sensor_index': 'sensor_index', 'latitude': 'latitdue', 'longitude': 'longitude', 'altitude': 'altitude',
+                'rssi': 'rssi', 'uptime': 'uptime', 'humidity': 'humidity', 'temperature': 'temperature', 'pressure': 'pressure',
+                'pm1.0_atm_a': 'pm1.0_atm_a', 'pm1.0_atm_b': 'pm1.0_atm_b', 'pm2.5_atm_a': 'pm2.5_atm_a', 'pm2.5_atm_b': 'pm2.5_atm_b', 'pm10.0_atm_a': 'pm10.0_atm_a', 'pm10.0_atm_b': 'pm10.0_atm_b',
+                'pm1.0_cf_1_a': 'pm1.0_cf_1_a', 'pm1.0_cf_1_b': 'pm1.0_cf_1_b', 'pm2.5_cf_1_a': 'pm2.5_cf_1_a', 'pm2.5_cf_1_b': 'pm2.5_cf_1_b', 'pm10.0_cf_1_a': 'pm10.0_cf_1_a', 'pm10.0_cf_1_b': 'pm10.0_cf_1_b',
+                '0.3_um_count': '0.3_um_count', '0.5_um_count': '0.5_um_count', '1.0_um_count': '1.0_um_count', '2.5_um_count': '2.5_um_count', '5.0_um_count': '5.0_um_count', '10.0_um_count': '10.0_um_count',
+                'Ipm25': 'Ipm25', 'pm25_epa': 'pm25_epa'
+                }
+        df_summarized.rename(cols, axis=1)
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
-        sleep(10)
+        sleep(30)
     return df_tv
 
 
@@ -249,6 +258,7 @@ def regional_stats(document_name):
         df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
         df_combined = pd.DataFrame()
         data_list = []
+        sleep(30)
     out_sheet_regional = client.open(document_name).worksheet("Regional")
     out_sheet_regional.update([df_regional_stats.columns.values.tolist()] + df_regional_stats.values.tolist())
 
