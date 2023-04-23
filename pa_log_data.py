@@ -165,6 +165,10 @@ def process_data(document_name, client):
         if k == "TV":
             df_tv = df.copy()
         df_proc = df.copy()
+        print(" )")
+        print(k)
+        print(df_summarized[['humidity', 'temperature', 'pressure']])
+        print(" ")
         df_proc['pm2.5_atm_avg'] = df_proc[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df_proc['Ipm25'] = df_proc.apply(
             lambda x: calc_aqi(x['pm2.5_atm_avg']),
@@ -181,10 +185,6 @@ def process_data(document_name, client):
             format='%m/%d/%Y %H:%M:%S'
         )
         df_summarized.set_index('time_stamp', inplace=True)
-        print(" )")
-        print(k)
-        print(df_summarized[['humidity', 'temperature', 'pressure']])
-        print(" ")
         df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         df_summarized.reset_index(inplace=True)
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
