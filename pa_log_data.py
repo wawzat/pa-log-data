@@ -186,13 +186,13 @@ def process_data(document_name, client):
             df_summarized['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
-        # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized.set_index('time_stamp', inplace=True)
+        # Humidity, temperature and pressure are in the RS dataframe at this point
+        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         print(" ")
         print(k)
         print(df_summarized[['humidity', 'temperature', 'pressure']])
         print(" ")
-        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         df_summarized.reset_index(inplace=True)
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
