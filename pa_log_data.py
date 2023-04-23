@@ -183,15 +183,15 @@ def process_data(document_name, client):
         df_summarized.set_index('time_stamp', inplace=True)
         df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         df_summarized.reset_index(inplace=True)
-        # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
+        # Humidity, temperature and pressure are in the RS dataframe at this point
+        df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         print(" ")
         print(k)
         print(df_proc[['humidity', 'temperature', 'pressure']])
         print(" ")
-        df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
         #Clean data when PM ATM 2.5 channels differ by 5 or 70%
         df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
