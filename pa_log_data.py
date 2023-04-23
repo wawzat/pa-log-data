@@ -190,18 +190,18 @@ def process_data(document_name, client):
         df_summarized = df_summarized.fillna('')
         #Clean data when PM ATM 2.5 channels differ by 5 or 70%
         df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
-        # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized.drop(
             df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) /
                 ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
             ].index,
             inplace=True
         )
+        # Humidity, temperature and pressure are in the RS dataframe at this point
+        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
         print(" ")
         print(k)
         print(df_proc[['humidity', 'temperature', 'pressure']])
         print(" ")
-        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
         #cols = {'time_stamp': 'time_stamp', 'sensor_index': 'sensor_index', 'name': 'name', 'latitude': 'latitdue', 'longitude': 'longitude', 'altitude': 'altitude',
                 #'rssi': 'rssi', 'uptime': 'uptime', 'humidity': 'humidity', 'temperature': 'temperature', 'pressure': 'pressure',
                 #'pm1.0_atm_a': 'pm1.0_atm_a', 'pm1.0_atm_b': 'pm1.0_atm_b', 'pm2.5_atm_a': 'pm2.5_atm_a', 'pm2.5_atm_b': 'pm2.5_atm_b', 'pm10.0_atm_a': 'pm10.0_atm_a', 'pm10.0_atm_b': 'pm10.0_atm_b',
