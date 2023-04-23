@@ -185,7 +185,7 @@ def process_data(document_name, client):
         df_summarized.reset_index(inplace=True)
         print(" )")
         print(k)
-        print(df_summarized)
+        print(df_summarized[['humidity', 'temperature', 'pressure']])
         print(" ")
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
