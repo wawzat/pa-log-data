@@ -189,8 +189,12 @@ def process_data(document_name, client):
         df_summarized.set_index('time_stamp', inplace=True)
         # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
+        # This is where the humidity, temperature and pressure data are lost
         print(" ")
         print(k)
+        print(" ")
+        print(df_summarized)
+        print(" ")
         print(df_summarized[['humidity', 'temperature', 'pressure']])
         print(" ")
         df_summarized.reset_index(inplace=True)
