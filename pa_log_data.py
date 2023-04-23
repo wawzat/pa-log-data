@@ -181,17 +181,16 @@ def process_data(document_name, client):
                     lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
-        # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized = df_proc.copy()
-        print(" ")
-        print(k)
-        print(df_summarized[['humidity', 'temperature', 'pressure']])
-        print(" ")
-
+        # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized['time_stamp'] = pd.to_datetime(
             df_summarized['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
+        print(" ")
+        print(k)
+        print(df_summarized[['humidity', 'temperature', 'pressure']])
+        print(" ")
         df_summarized.set_index('time_stamp', inplace=True)
         df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         df_summarized.reset_index(inplace=True)
