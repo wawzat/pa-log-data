@@ -167,7 +167,7 @@ def process_data(document_name, client):
         df_proc = df.copy()
         print(" )")
         print(k)
-        print(df_summarized[['humidity', 'temperature', 'pressure']])
+        print(df_proc[['humidity', 'temperature', 'pressure']])
         print(" ")
         df_proc['pm2.5_atm_avg'] = df_proc[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df_proc['Ipm25'] = df_proc.apply(
