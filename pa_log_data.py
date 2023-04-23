@@ -171,8 +171,8 @@ def process_data(document_name, client):
         df = pd.DataFrame(in_sheet.get_all_records())
         df_proc = pd.DataFrame()
         df_summarized = pd.DataFrame()
-        if k == "TV":
-            df_tv = df.copy()
+        #if k == "TV":
+            #df_tv = df.copy()
         df_proc = df.copy()
         df_proc['pm2.5_atm_avg'] = df_proc[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df_proc['Ipm25'] = df_proc.apply(
@@ -228,7 +228,7 @@ def process_data(document_name, client):
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
         sleep(30)
-    return df_tv
+    return df
 
 
 def sensor_health(df, document_name, out_worksheet_health_name):
