@@ -9,6 +9,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 import json
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
@@ -188,8 +189,8 @@ def process_data(document_name, client):
         )
         df_summarized.set_index('time_stamp', inplace=True)
         # Humidity, temperature and pressure are in the RS dataframe at this point
-        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
-        # This is where the humidity, temperature and pressure data are lost
+        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True, fill_value=np.nan)
+        # Above is where the humidity, temperature and pressure data are lost
         pd.set_option('display.max_columns', None)
         print(" ")
         print(k)
