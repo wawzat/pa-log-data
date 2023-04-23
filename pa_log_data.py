@@ -190,6 +190,7 @@ def process_data(document_name, client):
         # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         # This is where the humidity, temperature and pressure data are lost
+        pd.set_option('display.max_columns', None)
         print(" ")
         print(k)
         print(" ")
