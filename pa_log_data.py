@@ -165,21 +165,21 @@ def process_data(document_name, client):
         if k == "TV":
             df_tv = df.copy()
         df_proc = df.copy()
-        # Humidity, temperature and pressure are in the dataframe at this point
         df_proc['pm2.5_atm_avg'] = df_proc[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df_proc['Ipm25'] = df_proc.apply(
             lambda x: calc_aqi(x['pm2.5_atm_avg']),
             axis=1
             )
-        print(" )")
-        print(k)
-        print(df_proc[['humidity', 'temperature', 'pressure']])
-        print(" ")
+        # Humidity, temperature and pressure are in the dataframe at this point
         df_proc['pm2.5_cf_1_avg'] = df_proc[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
         df_proc['pm25_epa'] = df_proc.apply(
                     lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
+        print(" ")
+        print(k)
+        print(df_proc[['humidity', 'temperature', 'pressure']])
+        print(" ")
         df_summarized = df_proc.copy()
         df_summarized['time_stamp'] = pd.to_datetime(
             df_summarized['time_stamp'],
