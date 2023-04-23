@@ -196,12 +196,8 @@ def process_data(document_name, client):
             ].index,
             inplace=True
         )
-        # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
-        print(" ")
-        print(k)
-        print(df_proc[['humidity', 'temperature', 'pressure']])
-        print(" ")
+        # Humidity, temperature and pressure are in the RS dataframe at this point
         #cols = {'time_stamp': 'time_stamp', 'sensor_index': 'sensor_index', 'name': 'name', 'latitude': 'latitdue', 'longitude': 'longitude', 'altitude': 'altitude',
                 #'rssi': 'rssi', 'uptime': 'uptime', 'humidity': 'humidity', 'temperature': 'temperature', 'pressure': 'pressure',
                 #'pm1.0_atm_a': 'pm1.0_atm_a', 'pm1.0_atm_b': 'pm1.0_atm_b', 'pm2.5_atm_a': 'pm2.5_atm_a', 'pm2.5_atm_b': 'pm2.5_atm_b', 'pm10.0_atm_a': 'pm10.0_atm_a', 'pm10.0_atm_b': 'pm10.0_atm_b',
@@ -217,6 +213,10 @@ def process_data(document_name, client):
                 'Ipm25', 'pm25_epa'
                 ]
         df_summarized = df_summarized[cols]
+        print(" ")
+        print(k)
+        print(df_proc[['humidity', 'temperature', 'pressure']])
+        print(" ")
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
