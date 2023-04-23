@@ -169,6 +169,8 @@ def process_data(document_name, client):
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
+        df_proc = pd.DataFrame()
+        df_summarized = pd.DataFrame()
         if k == "TV":
             df_tv = df.copy()
         df_proc = df.copy()
@@ -189,7 +191,7 @@ def process_data(document_name, client):
         )
         df_summarized.set_index('time_stamp', inplace=True)
         # Humidity, temperature and pressure are in the RS dataframe at this point
-        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True, fill_value=np.nan)
+        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         # Above is where the humidity, temperature and pressure data are lost
         pd.set_option('display.max_columns', None)
         print(" ")
