@@ -170,22 +170,22 @@ def process_data(document_name, client):
             lambda x: calc_aqi(x['pm2.5_atm_avg']),
             axis=1
             )
-        # Humidity, temperature and pressure are in the dataframe at this point
         df_proc['pm2.5_cf_1_avg'] = df_proc[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
         df_proc['pm25_epa'] = df_proc.apply(
                     lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
-        print(" ")
-        print(k)
-        print(df_proc[['humidity', 'temperature', 'pressure']])
-        print(" ")
+        # Humidity, temperature and pressure are in the dataframe at this point
         df_summarized = df_proc.copy()
         df_summarized['time_stamp'] = pd.to_datetime(
             df_summarized['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
         df_summarized.set_index('time_stamp', inplace=True)
+        print(" ")
+        print(k)
+        print(df_proc[['humidity', 'temperature', 'pressure']])
+        print(" ")
         df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
         df_summarized.reset_index(inplace=True)
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
