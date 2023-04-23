@@ -187,14 +187,14 @@ def process_data(document_name, client):
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
-        # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized = df_summarized.fillna('')
+        # Humidity, temperature and pressure are in the RS dataframe at this point
+        #Clean data when PM ATM 2.5 channels differ by 5 or 70%
+        df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
         print(" ")
         print(k)
         print(df_proc[['humidity', 'temperature', 'pressure']])
         print(" ")
-        #Clean data when PM ATM 2.5 channels differ by 5 or 70%
-        df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
         df_summarized.drop(
             df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) /
                 ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
