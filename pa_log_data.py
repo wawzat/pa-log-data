@@ -163,16 +163,17 @@ def process_data(document_name, client):
             'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count',
             'Ipm25', 'pm25_epa']
-    for k, v in config.bbox_dict.items():
+    #for k, v in config.bbox_dict.items():
+    for k in ['TV', 'TV']:
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
-        df_proc = pd.DataFrame()
-        df_summarized = pd.DataFrame()
-        #if k == "TV":
-            #df_tv = df.copy()
+        #df_proc = pd.DataFrame()
+        #df_summarized = pd.DataFrame()
+        if k == "TV":
+            df_tv = df.copy()
         df_proc = df.copy()
         df_proc['pm2.5_atm_avg'] = df_proc[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df_proc['Ipm25'] = df_proc.apply(
@@ -228,7 +229,7 @@ def process_data(document_name, client):
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
         sleep(30)
-    return df
+    return df_tv
 
 
 def sensor_health(df, document_name, out_worksheet_health_name):
