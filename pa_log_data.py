@@ -170,11 +170,8 @@ def process_data(document_name, client):
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
-        #df_proc = pd.DataFrame()
-        #df_summarized = pd.DataFrame()
         if k == "TV":
             df_tv = df.copy()
-        #df_proc = df.copy()
         df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
             lambda x: calc_aqi(x['pm2.5_atm_avg']),
@@ -185,12 +182,10 @@ def process_data(document_name, client):
                     lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
-        #df_summarized = df_proc.copy()
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
-        #df.set_index('time_stamp', inplace=True)
         df = df.set_index('time_stamp')
         pd.set_option('display.max_columns', None)
         print(" ")
@@ -198,15 +193,12 @@ def process_data(document_name, client):
         print(" ")
         print(df)
         # Humidity, temperature and pressure are in the RS dataframe at this point
-        df = df.dropna(subset=['humidity', 'temperature', 'pressure'])
-        df = df.fillna('')
-        # Above is where the humidity, temperature and pressure data are lost
         #df_summarized = df.groupby('name').resample('2H').mean(numeric_only=True)
-        df_summarized = df.groupby('name').resample('2H').mean()
+        df_summarized = df.groupby('name').resample('1H').agg(dict(humidity='mean', temperature='mean', pressure='mean'))
+        # Above is where the humidity, temperature and pressure data are lost
         print(" ")
         print(df_summarized[['humidity', 'temperature', 'pressure']])
         print(" ")
-        #df_summarized.reset_index(inplace=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
