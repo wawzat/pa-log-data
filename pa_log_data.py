@@ -166,7 +166,7 @@ def process_data(document_name, client):
     cols_7 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
             'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
-    cols_8 = ['Ipm25', 'pm25_epa']
+    cols_8 = ['pm25_epa', 'Ipm25']
     cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
     #cols = ['time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude',
             #'rssi', 'uptime', 'humidity', 'temperature', 'pressure',
