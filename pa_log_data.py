@@ -163,8 +163,8 @@ def process_data(document_name, client):
             'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count',
             'Ipm25', 'pm25_epa']
-    #for k, v in config.bbox_dict.items():
-    for k in ['TV', 'TV']:
+    for k, v in config.bbox_dict.items():
+    #for k in ['TV', 'RS']:
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
         out_worksheet_name: str = k + " Proc"
@@ -174,25 +174,25 @@ def process_data(document_name, client):
         #df_summarized = pd.DataFrame()
         if k == "TV":
             df_tv = df.copy()
-        df_proc = df.copy()
-        df_proc['pm2.5_atm_avg'] = df_proc[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
-        df_proc['Ipm25'] = df_proc.apply(
+        #df_proc = df.copy()
+        df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
+        df['Ipm25'] = df.apply(
             lambda x: calc_aqi(x['pm2.5_atm_avg']),
             axis=1
             )
-        df_proc['pm2.5_cf_1_avg'] = df_proc[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
-        df_proc['pm25_epa'] = df_proc.apply(
+        df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
+        df['pm25_epa'] = df.apply(
                     lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
-        df_summarized = df_proc.copy()
-        df_summarized['time_stamp'] = pd.to_datetime(
-            df_summarized['time_stamp'],
+        #df_summarized = df_proc.copy()
+        df['time_stamp'] = pd.to_datetime(
+            df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
-        df_summarized.set_index('time_stamp', inplace=True)
+        df.set_index('time_stamp', inplace=True)
         # Humidity, temperature and pressure are in the RS dataframe at this point
-        df_summarized = df_summarized.groupby('name').resample('1H').mean(numeric_only=True)
+        df_summarized = df.groupby('name').resample('1H').mean(numeric_only=True)
         # Above is where the humidity, temperature and pressure data are lost
         pd.set_option('display.max_columns', None)
         print(" ")
