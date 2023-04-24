@@ -211,12 +211,11 @@ def process_data(document_name, client):
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
         #Clean data when PM ATM 2.5 channels differ by 5 or 70%
-        df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index, inplace=True)
-        df_summarized.drop(
+        df_summarized = df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index)
+        df_summarized = df_summarized.drop(
             df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) /
                 ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
-            ].index,
-            inplace=True
+            ].index
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
         #cols_dict = {'time_stamp': 'time_stamp', 'sensor_index': 'sensor_index', 'name': 'name', 'latitude': 'latitdue', 'longitude': 'longitude', 'altitude': 'altitude',
