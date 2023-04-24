@@ -9,7 +9,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 import json
 import pandas as pd
-import numpy as np
+#import numpy as np
 from pathlib import Path
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
@@ -187,6 +187,7 @@ def process_data(document_name, client):
             format='%m/%d/%Y %H:%M:%S'
         )
         df = df.set_index('time_stamp')
+        df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].replace('', 0)
         df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].astype(float)
         pd.set_option('display.max_columns', None)
         print(" ")
