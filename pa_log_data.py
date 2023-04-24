@@ -157,13 +157,21 @@ def calc_epa(PM2_5, RH):
 
 
 def process_data(document_name, client):
-
-    cols = ['time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude',
-            'rssi', 'uptime', 'humidity', 'temperature', 'pressure',
-            'pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
+    cols_1 = ['time_stamp']
+    cols_2 = ['sensor_index', 'name', 'latitude', 'longitude']
+    cols_3 = ['altitude', 'rssi', 'uptime']
+    cols_4 = ['humidity', 'temperature', 'pressure', 'voc']
+    cols_5 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
             'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
-            '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count',
-            'Ipm25', 'pm25_epa']
+            '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
+    cols_6 = ['Ipm25', 'pm25_epa']
+    cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6
+    #cols = ['time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude',
+            #'rssi', 'uptime', 'humidity', 'temperature', 'pressure',
+            #'pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
+            #'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
+            #'0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count',
+            #'Ipm25', 'pm25_epa']
     for k, v in config.bbox_dict.items():
     #for k in ['TV', 'RS']:
         # open the Google Sheets input worksheet
@@ -188,8 +196,8 @@ def process_data(document_name, client):
             format='%m/%d/%Y %H:%M:%S'
         )
         df = df.set_index('time_stamp')
-        df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].replace('', 0)
-        df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].astype(float)
+        df[cols_4] = df[cols_4].replace('', 0)
+        df[cols_4] = df[cols_4].astype(float)
         pd.set_option('display.max_columns', None)
         print(" ")
         print(k)
@@ -217,8 +225,9 @@ def process_data(document_name, client):
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
         df_summarized = df_summarized[cols]
-        float_cols = df_summarized.select_dtypes(include=['float'])
-        df_summarized[float_cols.columns] = float_cols.round(2)
+        #float_cols = df_summarized.select_dtypes(include=['float'])
+        #df_summarized[float_cols.columns] = float_cols.round(2)
+        df_summarized[cols_5] = df[cols_5].round(2)
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
