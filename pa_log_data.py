@@ -284,12 +284,12 @@ def regional_stats(document_name):
 
 
 def main():
-    for k, v in config.bbox_dict.items():
-        df = get_data(config.bbox_dict.get(k)[0])
-        if df.empty:
-            pass
-        else:
-            write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], config.write_csv)
+    #for k, v in config.bbox_dict.items():
+        #df = get_data(config.bbox_dict.get(k)[0])
+        #if df.empty:
+            #pass
+        #else:
+            #write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], config.write_csv)
     local_interval_start = datetime.now()
     regional_interval_start = local_interval_start
     process_interval_start = local_interval_start
@@ -299,11 +299,11 @@ def main():
             local_interval_td = datetime.now() - local_interval_start
             regional_interval_td = datetime.now() - regional_interval_start
             process_interval_td = datetime.now() - process_interval_start
-            if local_interval_td.total_seconds() >= config.local_interval_duration:
-                df_local = get_data(config.bbox_dict.get("TV")[0])
-                if len (df_local.index) > 0:
-                    write_data(df_local, client, config.document_name, config.local_worksheet_name, config.write_csv)
-                local_interval_start = datetime.now()
+            #if local_interval_td.total_seconds() >= config.local_interval_duration:
+                #df_local = get_data(config.bbox_dict.get("TV")[0])
+                #if len (df_local.index) > 0:
+                    #write_data(df_local, client, config.document_name, config.local_worksheet_name, config.write_csv)
+                #local_interval_start = datetime.now()
             if regional_interval_td.total_seconds() > config.regional_interval_duration:
                 for regional_key in config.regional_keys:
                     df = get_data(config.bbox_dict.get(regional_key)[0]) 
@@ -314,9 +314,9 @@ def main():
             if process_interval_td.total_seconds() > config.process_interval_duration:
                 df = process_data(config.document_name, client)
                 process_interval_td = datetime.now() - process_interval_start
-                if len(df.index) > 0:
-                    sensor_health(df, config.document_name, config.out_worksheet_health_name)
-                    regional_stats(config.document_name)
+                #if len(df.index) > 0:
+                    #sensor_health(df, config.document_name, config.out_worksheet_health_name)
+                    #regional_stats(config.document_name)
         except KeyboardInterrupt:
             sys.exit()
 
