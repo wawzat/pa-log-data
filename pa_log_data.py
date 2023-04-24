@@ -193,8 +193,8 @@ def process_data(document_name, client):
         #df.set_index('time_stamp', inplace=True)
         df = df.set_index('time_stamp')
         # Humidity, temperature and pressure are in the RS dataframe at this point
-        df_summarized = df_summarized.dropna(subset=['humidity', 'temperature', 'pressure'])
-        df_summarized = df_summarized.fillna('')
+        df = df.dropna(subset=['humidity', 'temperature', 'pressure'])
+        df = df.fillna('')
         df_summarized = df.groupby('name').resample('2H').mean(numeric_only=True)
         # Above is where the humidity, temperature and pressure data are lost
         pd.set_option('display.max_columns', None)
