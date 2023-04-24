@@ -189,17 +189,17 @@ def process_data(document_name, client):
         df = df.set_index('time_stamp')
         df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].replace('', 0)
         df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].astype(float)
+        float_cols = df.select_dtypes(include=['float'])
+        df[float_cols.columns] = float_cols.round(2)
         pd.set_option('display.max_columns', None)
         print(" ")
         print(k)
         print(" ")
         print(df)
         print(" ")
-        print(df.dtypes)
-        print(" ")
-        # Humidity, temperature and pressure are in the RS dataframe at this point
+        #print(df.dtypes)
+        #print(" ")
         df_summarized = df.groupby('name').resample('2H').mean(numeric_only=True)
-        # Above is where the humidity, temperature and pressure data are lost
         print(" ")
         print(df_summarized[['humidity', 'temperature', 'pressure']])
         print(" ")
@@ -217,13 +217,6 @@ def process_data(document_name, client):
             ].index
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
-        #cols_dict = {'time_stamp': 'time_stamp', 'sensor_index': 'sensor_index', 'name': 'name', 'latitude': 'latitdue', 'longitude': 'longitude', 'altitude': 'altitude',
-                #'rssi': 'rssi', 'uptime': 'uptime', 'humidity': 'humidity', 'temperature': 'temperature', 'pressure': 'pressure',
-                #'pm1.0_atm_a': 'pm1.0_atm_a', 'pm1.0_atm_b': 'pm1.0_atm_b', 'pm2.5_atm_a': 'pm2.5_atm_a', 'pm2.5_atm_b': 'pm2.5_atm_b', 'pm10.0_atm_a': 'pm10.0_atm_a', 'pm10.0_atm_b': 'pm10.0_atm_b',
-                #'pm1.0_cf_1_a': 'pm1.0_cf_1_a', 'pm1.0_cf_1_b': 'pm1.0_cf_1_b', 'pm2.5_cf_1_a': 'pm2.5_cf_1_a', 'pm2.5_cf_1_b': 'pm2.5_cf_1_b', 'pm10.0_cf_1_a': 'pm10.0_cf_1_a', 'pm10.0_cf_1_b': 'pm10.0_cf_1_b',
-                #'0.3_um_count': '0.3_um_count', '0.5_um_count': '0.5_um_count', '1.0_um_count': '1.0_um_count', '2.5_um_count': '2.5_um_count', '5.0_um_count': '5.0_um_count', '10.0_um_count': '10.0_um_count',
-                #'Ipm25': 'Ipm25', 'pm25_epa': 'pm25_epa'
-                #}
         df_summarized = df_summarized[cols]
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
