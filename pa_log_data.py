@@ -291,8 +291,8 @@ def main():
         #else:
             #write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], config.write_csv)
     local_interval_start = datetime.now()
-    regional_interval_start = local_interval_start
-    process_interval_start = local_interval_start
+    regional_interval_start = datetime.now()
+    process_interval_start = datetime.now()
     while True:
         try:
             sleep(1)
