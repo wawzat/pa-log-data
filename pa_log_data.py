@@ -198,8 +198,8 @@ def process_data(document_name, client):
         print(" ")
         print(df)
         # Humidity, temperature and pressure are in the RS dataframe at this point
-        #df = df.dropna(subset=['humidity', 'temperature', 'pressure'])
-        #df = df.fillna('')
+        df = df.dropna(subset=['humidity', 'temperature', 'pressure'])
+        df = df.fillna('')
         # Above is where the humidity, temperature and pressure data are lost
         #df_summarized = df.groupby('name').resample('2H').mean(numeric_only=True)
         df_summarized = df.groupby('name').resample('2H').mean()
