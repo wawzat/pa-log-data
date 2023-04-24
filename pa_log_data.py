@@ -227,7 +227,7 @@ def process_data(document_name, client):
         df_summarized = df_summarized[cols]
         #float_cols = df_summarized.select_dtypes(include=['float'])
         #df_summarized[float_cols.columns] = float_cols.round(2)
-        df_summarized[cols_5] = df[cols_5].round(2)
+        df_summarized[cols_5] = df_summarized[cols_5].round(2)
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
