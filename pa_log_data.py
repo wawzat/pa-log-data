@@ -157,6 +157,7 @@ def calc_epa(PM2_5, RH):
 
 
 def process_data(document_name, client):
+
     cols = ['time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude',
             'rssi', 'uptime', 'humidity', 'temperature', 'pressure',
             'pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
@@ -195,8 +196,8 @@ def process_data(document_name, client):
         print(" ")
         print(df)
         print(" ")
-        #print(df.dtypes)
-        #print(" ")
+        print(df.dtypes)
+        print(" ")
         df_summarized = df.groupby('name').resample('1H').mean(numeric_only=True)
         print(" ")
         print(df_summarized[['humidity', 'temperature', 'pressure']])
