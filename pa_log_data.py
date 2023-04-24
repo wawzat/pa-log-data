@@ -189,8 +189,6 @@ def process_data(document_name, client):
         df = df.set_index('time_stamp')
         df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].replace('', 0)
         df[['humidity', 'temperature', 'pressure', 'voc']] = df[['humidity', 'temperature', 'pressure', 'voc']].astype(float)
-        float_cols = df.select_dtypes(include=['float'])
-        df[float_cols.columns] = float_cols.round(2)
         pd.set_option('display.max_columns', None)
         print(" ")
         print(k)
@@ -199,7 +197,7 @@ def process_data(document_name, client):
         print(" ")
         #print(df.dtypes)
         #print(" ")
-        df_summarized = df.groupby('name').resample('2H').mean(numeric_only=True)
+        df_summarized = df.groupby('name').resample('1H').mean(numeric_only=True)
         print(" ")
         print(df_summarized[['humidity', 'temperature', 'pressure']])
         print(" ")
@@ -218,6 +216,8 @@ def process_data(document_name, client):
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
         df_summarized = df_summarized[cols]
+        float_cols = df_summarized.select_dtypes(include=['float'])
+        df_summarized[float_cols.columns] = float_cols.round(2)
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
