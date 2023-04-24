@@ -192,6 +192,9 @@ def process_data(document_name, client):
         print(k)
         print(" ")
         print(df)
+        print(" ")
+        print(df.dtypes)
+        print(" ")
         # Humidity, temperature and pressure are in the RS dataframe at this point
         #df_summarized = df.groupby('name').resample('2H').mean(numeric_only=True)
         df_summarized = df.groupby('name').resample('1H').agg(dict(humidity='mean', temperature='mean', pressure='mean'))
