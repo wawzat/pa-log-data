@@ -159,13 +159,15 @@ def calc_epa(PM2_5, RH):
 def process_data(document_name, client):
     cols_1 = ['time_stamp']
     cols_2 = ['sensor_index', 'name', 'latitude', 'longitude']
-    cols_3 = ['altitude', 'rssi', 'uptime']
-    cols_4 = ['humidity', 'temperature', 'pressure', 'voc']
-    cols_5 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
+    cols_3 = ['altitude']
+    cols_4 = ['rssi']
+    cols_5 = ['uptime']
+    cols_6 = ['humidity', 'temperature', 'pressure', 'voc']
+    cols_7 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
             'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
-    cols_6 = ['Ipm25', 'pm25_epa']
-    cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6
+    cols_8 = ['Ipm25', 'pm25_epa']
+    cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
     #cols = ['time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude',
             #'rssi', 'uptime', 'humidity', 'temperature', 'pressure',
             #'pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
@@ -196,8 +198,8 @@ def process_data(document_name, client):
             format='%m/%d/%Y %H:%M:%S'
         )
         df = df.set_index('time_stamp')
-        df[cols_4] = df[cols_4].replace('', 0)
-        df[cols_4] = df[cols_4].astype(float)
+        df[cols_6] = df[cols_6].replace('', 0)
+        df[cols_6] = df[cols_6].astype(float)
         pd.set_option('display.max_columns', None)
         print(" ")
         print(k)
@@ -224,10 +226,14 @@ def process_data(document_name, client):
             ].index
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
-        df_summarized = df_summarized[cols]
         #float_cols = df_summarized.select_dtypes(include=['float'])
         #df_summarized[float_cols.columns] = float_cols.round(2)
-        df_summarized[cols_5] = df_summarized[cols_5].round(2)
+        df_summarized[cols_4] = df_summarized[cols_4].round(2)
+        df_summarized[cols_5] = df_summarized[cols_5].astype(int)
+        df_summarized[cols_6] = df_summarized[cols_6].round(2)
+        df_summarized[cols_7] = df_summarized[cols_7].round(2)
+        df_summarized[cols_8] = df_summarized[cols_8].astype(int)
+        df_summarized = df_summarized[cols]
         # open the Google Sheets output worksheet
         out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
