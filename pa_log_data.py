@@ -190,7 +190,8 @@ def process_data(document_name, client):
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
-        df.set_index('time_stamp', inplace=True)
+        #df.set_index('time_stamp', inplace=True)
+        df = df.set_index('time_stamp')
         # Humidity, temperature and pressure are in the RS dataframe at this point
         df_summarized = df.groupby('name').resample('1H').mean(numeric_only=True)
         # Above is where the humidity, temperature and pressure data are lost
