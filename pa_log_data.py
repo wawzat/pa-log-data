@@ -168,14 +168,7 @@ def process_data(document_name, client):
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
     cols_8 = ['pm25_epa', 'Ipm25']
     cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
-    #cols = ['time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude',
-            #'rssi', 'uptime', 'humidity', 'temperature', 'pressure',
-            #'pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
-            #'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
-            #'0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count',
-            #'Ipm25', 'pm25_epa']
     for k, v in config.bbox_dict.items():
-    #for k in ['TV', 'RS']:
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
         out_worksheet_name: str = k + " Proc"
@@ -200,18 +193,6 @@ def process_data(document_name, client):
         df = df.set_index('time_stamp')
         df[cols_6] = df[cols_6].replace('', 0)
         df[cols_6] = df[cols_6].astype(float)
-        pd.set_option('display.max_columns', None)
-        print(" ")
-        print(k)
-        print(" ")
-        print(df)
-        print(" ")
-        print(df.dtypes)
-        print(" ")
-        df_summarized = df.groupby('name').resample('1H').mean(numeric_only=True)
-        print(" ")
-        print(df_summarized[['humidity', 'temperature', 'pressure']])
-        print(" ")
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
@@ -226,8 +207,6 @@ def process_data(document_name, client):
             ].index
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
-        #float_cols = df_summarized.select_dtypes(include=['float'])
-        #df_summarized[float_cols.columns] = float_cols.round(2)
         df_summarized[cols_4] = df_summarized[cols_4].round(2)
         df_summarized[cols_5] = df_summarized[cols_5].astype(int)
         df_summarized[cols_6] = df_summarized[cols_6].round(2)
@@ -293,12 +272,12 @@ def regional_stats(document_name):
 
 
 def main():
-    #for k, v in config.bbox_dict.items():
-        #df = get_data(config.bbox_dict.get(k)[0])
-        #if df.empty:
-            #pass
-        #else:
-            #write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], config.write_csv)
+    for k, v in config.bbox_dict.items():
+        df = get_data(config.bbox_dict.get(k)[0])
+        if df.empty:
+            pass
+        else:
+            write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], config.write_csv)
     local_interval_start = datetime.now()
     regional_interval_start = datetime.now()
     process_interval_start = datetime.now()
@@ -308,11 +287,11 @@ def main():
             local_interval_td = datetime.now() - local_interval_start
             regional_interval_td = datetime.now() - regional_interval_start
             process_interval_td = datetime.now() - process_interval_start
-            #if local_interval_td.total_seconds() >= config.local_interval_duration:
-                #df_local = get_data(config.bbox_dict.get("TV")[0])
-                #if len (df_local.index) > 0:
-                    #write_data(df_local, client, config.document_name, config.local_worksheet_name, config.write_csv)
-                #local_interval_start = datetime.now()
+            if local_interval_td.total_seconds() >= config.local_interval_duration:
+                df_local = get_data(config.bbox_dict.get("TV")[0])
+                if len (df_local.index) > 0:
+                    write_data(df_local, client, config.document_name, config.local_worksheet_name, config.write_csv)
+                local_interval_start = datetime.now()
             if regional_interval_td.total_seconds() > config.regional_interval_duration:
                 for regional_key in config.regional_keys:
                     df = get_data(config.bbox_dict.get(regional_key)[0]) 
@@ -323,9 +302,9 @@ def main():
             if process_interval_td.total_seconds() > config.process_interval_duration:
                 df = process_data(config.document_name, client)
                 process_interval_td = datetime.now() - process_interval_start
-                #if len(df.index) > 0:
-                    #sensor_health(df, config.document_name, config.out_worksheet_health_name)
-                    #regional_stats(config.document_name)
+                if len(df.index) > 0:
+                    sensor_health(df, config.document_name, config.out_worksheet_health_name)
+                    regional_stats(config.document_name)
         except KeyboardInterrupt:
             sys.exit()
 
