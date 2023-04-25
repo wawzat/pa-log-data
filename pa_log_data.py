@@ -1,7 +1,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230419
+# James S. Lucas - 20230425
 
 import sys
 import requests
@@ -80,15 +80,27 @@ def get_data(bbox: List[float]) -> pd.DataFrame:
 
 
 def write_data(df, client, document_name, worksheet_name, write_csv):
-    # open the Google Sheets worksheet
-    sheet = client.open(document_name).worksheet(worksheet_name)
+    max_attempts = 3
+    attempts = 0
+    while attempts < max_attempts:
+        try:
+            # open the Google Sheets output worksheet
+            sheet = client.open(document_name).worksheet(worksheet_name)
+            sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
+            break
+        except gspread.exceptions.APIError as e:
+            logging.exception("gspread error in write_data():\n%s" % e)
+            attempts += 1
+            if attempts < max_attempts:
+                sleep(60)
+            else:
+                logging.exception("gspread error in write_data() max attempts reached:\n%s" % e)  
     # append the data to Google Sheets 
-    try:
-        sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
-        if write_csv:
+    if write_csv:
+        try:
             df.to_csv(output_pathname, index=True, header=True)
-    except Exception as e:
-        logging.exception("write_data error:\n%s" % e)
+        except Exception as e:
+            logging.exception("write_data() error writing csv:\n%s" % e)
 
 
 def calc_aqi(PM2_5):
@@ -214,9 +226,21 @@ def process_data(document_name, client):
         df_summarized[cols_7] = df_summarized[cols_7].round(2)
         df_summarized[cols_8] = df_summarized[cols_8].astype(int)
         df_summarized = df_summarized[cols]
-        # open the Google Sheets output worksheet
-        out_sheet = client.open(document_name).worksheet(out_worksheet_name)
-        out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
+        max_attempts = 3
+        attempts = 0
+        while attempts < max_attempts:
+            try:
+                # open the Google Sheets output worksheet
+                out_sheet = client.open(document_name).worksheet(out_worksheet_name)
+                out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
+                break
+            except gspread.exceptions.APIError as e:
+                logging.exception("gspread error in process_data():\n%s" % e)
+                attempts += 1
+                if attempts < max_attempts:
+                    sleep(60)
+                else:
+                    logging.exception("gspread error in process_data() max attempts reached:\n%s" % e)  
         sleep(30)
     return df_tv
 
@@ -241,12 +265,25 @@ def sensor_health(df, document_name, out_worksheet_health_name):
             pct_good = 1.00
         max_delta = df_grouped.get_group(k)['pm2.5_atm_dif'].max()
         sensor_health_list.append([k.upper(), pct_good, max_delta])
-    out_sheet_health = client.open(document_name).worksheet(out_worksheet_health_name)
     df_health = pd.DataFrame(sensor_health_list)
     df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR'}, axis=1)
     df_health['CONFIDENCE'] = df_health['CONFIDENCE'].round(2)
     df_health = df_health.sort_values(by=['NAME'])
-    out_sheet_health.update([df_health.columns.values.tolist()] + df_health.values.tolist())
+    max_attempts = 3
+    attempts = 0
+    while attempts < max_attempts:
+        try:
+            out_sheet_health = client.open(document_name).worksheet(out_worksheet_health_name)
+            out_sheet_health.update([df_health.columns.values.tolist()] + df_health.values.tolist())
+            break
+        except gspread.exceptions.APIError as e:
+            logging.exception("gspread error in sensor_health():\n%s" % e)
+            attempts += 1
+            if attempts < max_attempts:
+                sleep(60)
+            else:
+                logging.exception("gspread error in sensor_health() max attempts reached:\n%s" % e)  
+    sleep(20)
 
 
 def regional_stats(document_name):
@@ -268,8 +305,20 @@ def regional_stats(document_name):
         df_combined = pd.DataFrame()
         data_list = []
         sleep(30)
-    out_sheet_regional = client.open(document_name).worksheet("Regional")
-    out_sheet_regional.update([df_regional_stats.columns.values.tolist()] + df_regional_stats.values.tolist())
+    max_attempts = 3
+    attempts = 0
+    while attempts < max_attempts:
+        try:
+            out_sheet_regional = client.open(document_name).worksheet("Regional")
+            out_sheet_regional.update([df_regional_stats.columns.values.tolist()] + df_regional_stats.values.tolist())
+            break
+        except gspread.exceptions.APIError as e:
+            logging.exception("gspread error in regional_stats():\n%s" % e)
+            attempts += 1
+            if attempts < max_attempts:
+                sleep(60)
+            else:
+                logging.exception("gspread error in regional_stats() max attempts reached:\n%s" % e)  
 
 
 def main():
