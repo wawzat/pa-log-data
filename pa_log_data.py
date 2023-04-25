@@ -193,6 +193,7 @@ def process_data(document_name, client):
         df = df.set_index('time_stamp')
         df[cols_6] = df[cols_6].replace('', 0)
         df[cols_6] = df[cols_6].astype(float)
+        df_summarized = df.groupby('name').resample('1H').mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
