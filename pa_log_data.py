@@ -13,7 +13,7 @@ import pandas as pd
 from pathlib import Path
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 import logging
 from typing import Dict, List
@@ -323,8 +323,9 @@ def regional_stats(document_name):
 
 
 def main():
+    one_hour_ago = datetime.now() - timedelta(hours=1)
     for k, v in config.bbox_dict.items():
-        df = get_data(config.bbox_dict.get(k)[0])
+        df = get_data(one_hour_ago, config.bbox_dict.get(k)[0])
         if df.empty:
             pass
         else:
