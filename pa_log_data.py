@@ -1,7 +1,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230425
+# James S. Lucas - 20230426
 
 import sys
 import requests
@@ -43,8 +43,8 @@ creds = ServiceAccountCredentials.from_json_keyfile_name(config.gspread_service_
 client = gspread.authorize(creds)
 
 
-def get_data(bbox: List[float]) -> pd.DataFrame:
-    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age=1100&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
+    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age=1100&modified_since={previous}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
     params: Dict[str, str] = {
         'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
                 "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
@@ -53,7 +53,8 @@ def get_data(bbox: List[float]) -> pd.DataFrame:
         'nwlng': bbox[0],
         'selat': bbox[1],
         'selng': bbox[2],
-        'nwlat': bbox[3]
+        'nwlat': bbox[3],
+        'previous': previous_time
     }
     url = root_url.format(**params)
     cols = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
@@ -241,7 +242,7 @@ def process_data(document_name, client):
                     sleep(180)
                 else:
                     logging.exception("gspread error in process_data() max attempts reached:\n%s" % e)  
-        sleep(60)
+        sleep(90)
     return df_tv
 
 
@@ -338,13 +339,13 @@ def main():
             regional_interval_td = datetime.now() - regional_interval_start
             process_interval_td = datetime.now() - process_interval_start
             if local_interval_td.total_seconds() >= config.local_interval_duration:
-                df_local = get_data(config.bbox_dict.get("TV")[0])
+                df_local = get_data(local_interval_start, config.bbox_dict.get("TV")[0])
                 if len (df_local.index) > 0:
                     write_data(df_local, client, config.document_name, config.local_worksheet_name, config.write_csv)
                 local_interval_start = datetime.now()
             if regional_interval_td.total_seconds() > config.regional_interval_duration:
                 for regional_key in config.regional_keys:
-                    df = get_data(config.bbox_dict.get(regional_key)[0]) 
+                    df = get_data(regional_interval_start, config.bbox_dict.get(regional_key)[0]) 
                     if len(df.index) > 0:
                         write_data(df, client, config.document_name, config.bbox_dict.get(regional_key)[1], config.write_csv)
                     sleep(10)
