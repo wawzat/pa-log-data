@@ -238,10 +238,10 @@ def process_data(document_name, client):
                 logging.exception("gspread error in process_data():\n%s" % e)
                 attempts += 1
                 if attempts < max_attempts:
-                    sleep(60)
+                    sleep(180)
                 else:
                     logging.exception("gspread error in process_data() max attempts reached:\n%s" % e)  
-        sleep(30)
+        sleep(60)
     return df_tv
 
 
