@@ -44,7 +44,7 @@ client = gspread.authorize(creds)
 
 
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
-    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age=1100&modified_since={previous}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age=1100&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
     params: Dict[str, str] = {
         'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
                 "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
