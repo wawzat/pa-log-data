@@ -294,32 +294,31 @@ def regional_stats(document_name):
         # open the Google Sheets input worksheet
         in_sheet = client.open(document_name).worksheet(worksheet_name)
         data = in_sheet.get_all_records()
-        if len(data.index) > 0:
-            data_list.append(data) 
-            df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
-            df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
-            df_combined = df_combined.dropna(subset=['Ipm25'])
-            df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
-            mean_value = df_combined['Ipm25'].mean().round(2)
-            max_value = df_combined['Ipm25'].max().round(2)
-            df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
-            df_combined = pd.DataFrame()
-            data_list = []
-            sleep(30)
-            max_attempts = 3
-            attempts = 0
-            while attempts < max_attempts:
-                try:
-                    out_sheet_regional = client.open(document_name).worksheet("Regional")
-                    out_sheet_regional.update([df_regional_stats.columns.values.tolist()] + df_regional_stats.values.tolist())
-                    break
-                except gspread.exceptions.APIError as e:
-                    logging.exception("gspread error in regional_stats():\n%s" % e)
-                    attempts += 1
-                    if attempts < max_attempts:
-                        sleep(60)
-                    else:
-                        logging.exception("gspread error in regional_stats() max attempts reached:\n%s" % e)  
+        data_list.append(data) 
+        df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
+        df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
+        df_combined = df_combined.dropna(subset=['Ipm25'])
+        df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
+        mean_value = df_combined['Ipm25'].mean().round(2)
+        max_value = df_combined['Ipm25'].max().round(2)
+        df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
+        df_combined = pd.DataFrame()
+        data_list = []
+        sleep(30)
+        max_attempts = 3
+        attempts = 0
+        while attempts < max_attempts:
+            try:
+                out_sheet_regional = client.open(document_name).worksheet("Regional")
+                out_sheet_regional.update([df_regional_stats.columns.values.tolist()] + df_regional_stats.values.tolist())
+                break
+            except gspread.exceptions.APIError as e:
+                logging.exception("gspread error in regional_stats():\n%s" % e)
+                attempts += 1
+                if attempts < max_attempts:
+                    sleep(60)
+                else:
+                    logging.exception("gspread error in regional_stats() max attempts reached:\n%s" % e)  
 
 
 def main():
