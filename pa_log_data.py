@@ -305,7 +305,7 @@ def regional_stats(document_name):
             df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
             df_combined = pd.DataFrame()
             data_list = []
-            sleep(30)
+            sleep(90)
             max_attempts = 3
             attempts = 0
             while attempts < max_attempts:
