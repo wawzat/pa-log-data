@@ -268,7 +268,7 @@ def sensor_health(df, document_name, out_worksheet_health_name):
         uptime = df_grouped.get_grou0(k)['uptime'].max()
         sensor_health_list.append([k.upper(), pct_good, max_delta])
     df_health = pd.DataFrame(sensor_health_list)
-    df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR'}, 3: 'RSSI', 4: 'UPTIME', axis=1)
+    df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR', 3: 'RSSI', 4: 'UPTIME'}, axis=1)
     df_health['CONFIDENCE'] = df_health['CONFIDENCE'].round(2)
     df_health = df_health.sort_values(by=['NAME'])
     max_attempts = 3
