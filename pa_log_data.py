@@ -1,7 +1,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230426
+# James S. Lucas - 20230503
 
 import sys
 import requests
@@ -9,7 +9,6 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 import json
 import pandas as pd
-#import numpy as np
 from pathlib import Path
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
@@ -44,7 +43,8 @@ client = gspread.authorize(creds)
 
 
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
-    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age=1100&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+    et_since = int((datetime.now() - previous_time).total_seconds())
     params: Dict[str, str] = {
         'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
                 "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
@@ -53,7 +53,8 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         'nwlng': bbox[0],
         'selat': bbox[1],
         'selng': bbox[2],
-        'nwlat': bbox[3]
+        'nwlat': bbox[3],
+        'et': et_since
     }
     url = root_url.format(**params)
     cols = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
@@ -325,9 +326,9 @@ def regional_stats(document_name):
 
 
 def main():
-    one_hour_ago = datetime.now() - timedelta(hours=1)
+    five_min_ago = datetime.now() - timedelta(minutes=5)
     for k, v in config.bbox_dict.items():
-        df = get_data(one_hour_ago, config.bbox_dict.get(k)[0])
+        df = get_data(five_min_ago, config.bbox_dict.get(k)[0])
         if df.empty:
             pass
         else:
