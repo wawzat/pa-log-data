@@ -186,6 +186,8 @@ def process_data(document_name, client):
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
+        if k == "TV":
+            df_tv = df.copy()
         df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
             lambda x: calc_aqi(x['pm2.5_atm_avg']),
@@ -224,8 +226,6 @@ def process_data(document_name, client):
         df_summarized[cols_7] = df_summarized[cols_7].round(2)
         df_summarized[cols_8] = df_summarized[cols_8].astype(int)
         df_summarized = df_summarized[cols]
-        if k == "TV":
-            df_tv = df_summarized.copy()
         max_attempts = 3
         attempts = 0
         while attempts < max_attempts:
