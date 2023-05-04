@@ -232,7 +232,9 @@ def process_data(document_name, client):
         df_summarized[cols_7] = df_summarized[cols_7].round(2)
         df_summarized[cols_8] = df_summarized[cols_8].astype(int)
         df_summarized = df_summarized[cols]
+        print("write_data(): ", out_worksheet_name)
         write_data(df_summarized, client, document_name, out_worksheet_name, write_mode, False)
+        print("write_data() complete: ", out_worksheet_name)
         sleep(90)
         #max_attempts = 3
         #attempts = 0
