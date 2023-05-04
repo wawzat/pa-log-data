@@ -190,7 +190,6 @@ def process_data(document_name, client):
         in_worksheet_name: str = k
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
-        #out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
         if k == "TV":
             df_tv = df.copy()
@@ -232,30 +231,12 @@ def process_data(document_name, client):
         df_summarized[cols_7] = df_summarized[cols_7].round(2)
         df_summarized[cols_8] = df_summarized[cols_8].astype(int)
         df_summarized = df_summarized[cols]
-        print("write_data(): ", out_worksheet_name)
         write_data(df_summarized, client, document_name, out_worksheet_name, write_mode, False)
-        print("write_data() complete: ", out_worksheet_name)
         sleep(90)
-        #max_attempts = 3
-        #attempts = 0
-        #while attempts < max_attempts:
-            #try:
-                # open the Google Sheets output worksheet
-                #out_sheet = client.open(document_name).worksheet(out_worksheet_name)
-                #out_sheet.update([df_summarized.columns.values.tolist()] + df_summarized.values.tolist(), value_input_option="USER_ENTERED")
-                #break
-            #except gspread.exceptions.APIError as e:
-                #logging.exception("gspread error in process_data():\n%s" % e)
-                #attempts += 1
-                #if attempts < max_attempts:
-                    #sleep(180)
-                #else:
-                    #logging.exception("gspread error in process_data() max attempts reached:\n%s" % e)  
     return df_tv
 
 
 def sensor_health(client, df, document_name, out_worksheet_health_name):
-    #out_sheet_health = client.open(document_name).worksheet(out_worksheet_health_name)
     # Compare the A&B channels and calculate percent good data.
     # Remove data when channels differ by >= +- 5 ug/m^3 and >= +- 70%
     sensor_health_list = []
@@ -284,27 +265,12 @@ def sensor_health(client, df, document_name, out_worksheet_health_name):
     df_health = df_health.sort_values(by=['NAME'])
     write_data(df_health, client, document_name, out_worksheet_health_name, write_mode, False)
     sleep(20)
-    #max_attempts = 3
-    #attempts = 0
-    #while attempts < max_attempts:
-        #try:
-            #out_sheet_health = client.open(document_name).worksheet(out_worksheet_health_name)
-            #out_sheet_health.update([df_health.columns.values.tolist()] + df_health.values.tolist())
-            #break
-        #except gspread.exceptions.APIError as e:
-            #logging.exception("gspread error in sensor_health():\n%s" % e)
-            #attempts += 1
-            #if attempts < max_attempts:
-                #sleep(60)
-            #else:
-                #logging.exception("gspread error in sensor_health() max attempts reached:\n%s" % e)  
 
 
 def regional_stats(client, document_name):
     data_list = []
     write_mode = 'update'
     out_worksheet_regional_name = 'Regional'
-    #out_sheet_regional = client.open(document_name).worksheet("Regional")
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
     for k, v in config.bbox_dict.items():
         worksheet_name = v[1] + " Proc"
@@ -324,20 +290,6 @@ def regional_stats(client, document_name):
             data_list = []
             write_data(df_regional_stats, client, document_name, out_worksheet_regional_name, write_mode, False)
             sleep(90)
-            #max_attempts = 3
-            #attempts = 0
-            #while attempts < max_attempts:
-                #try:
-                    #out_sheet_regional = client.open(document_name).worksheet("Regional")
-                    #out_sheet_regional.update([df_regional_stats.columns.values.tolist()] + df_regional_stats.values.tolist())
-                    #break
-                #except gspread.exceptions.APIError as e:
-                    #logging.exception("gspread error in regional_stats():\n%s" % e)
-                    #attempts += 1
-                    #if attempts < max_attempts:
-                        #sleep(60)
-                    #else:
-                        #logging.exception("gspread error in regional_stats() max attempts reached:\n%s" % e)  
 
 
 def main():
@@ -355,16 +307,16 @@ def main():
     while True:
         try:
             sleep(1)
-            local_interval_td = datetime.now() - local_interval_start
-            regional_interval_td = datetime.now() - regional_interval_start
-            process_interval_td = datetime.now() - process_interval_start
-            if local_interval_td.total_seconds() >= config.local_interval_duration:
+            local_interval_et = (datetime.now() - local_interval_start).total_seconds()
+            regional_interval_et = (datetime.now() - regional_interval_start).total_seconds()
+            process_interval_et = (datetime.now() - process_interval_start).total_seconds()
+            if local_interval_et >= config.local_interval_duration:
                 df_local = get_data(local_interval_start, config.bbox_dict.get("TV")[0])
                 if len (df_local.index) > 0:
                     write_mode = 'append'
                     write_data(df_local, client, config.document_name, config.local_worksheet_name, write_mode, config.write_csv)
                 local_interval_start = datetime.now()
-            if regional_interval_td.total_seconds() > config.regional_interval_duration:
+            if regional_interval_et > config.regional_interval_duration:
                 for regional_key in config.regional_keys:
                     df = get_data(regional_interval_start, config.bbox_dict.get(regional_key)[0]) 
                     if len(df.index) > 0:
@@ -372,9 +324,9 @@ def main():
                         write_data(df, client, config.document_name, config.bbox_dict.get(regional_key)[1], write_mode, config.write_csv)
                     sleep(10)
                 regional_interval_start = datetime.now()
-            if process_interval_td.total_seconds() > config.process_interval_duration:
+            if process_interval_et > config.process_interval_duration:
                 df = process_data(config.document_name, client)
-                process_interval_td = datetime.now() - process_interval_start
+                process_interval_start = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, config.document_name, config.out_worksheet_health_name)
                     regional_stats(client, config.document_name)
