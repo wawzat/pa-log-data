@@ -90,7 +90,7 @@ def write_data(df, client, document_name, worksheet_name, write_mode, write_csv)
             if write_mode == 'append':
                 sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
             elif write_mode == 'update':
-                sheet.update([df.columns.values.tolist()] + df.values.tolist())
+                sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option="USER_ENTERED")
             break
         except gspread.exceptions.APIError as e:
             logging.exception("gspread error in write_data():\n%s" % e)
