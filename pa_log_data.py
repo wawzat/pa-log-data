@@ -190,7 +190,7 @@ def process_data(document_name, client):
         in_worksheet_name: str = k
         out_worksheet_name: str = k + " Proc"
         in_sheet = client.open(document_name).worksheet(in_worksheet_name)
-        out_sheet = client.open(document_name).worksheet(out_worksheet_name)
+        #out_sheet = client.open(document_name).worksheet(out_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
         if k == "TV":
             df_tv = df.copy()
@@ -232,7 +232,7 @@ def process_data(document_name, client):
         df_summarized[cols_7] = df_summarized[cols_7].round(2)
         df_summarized[cols_8] = df_summarized[cols_8].astype(int)
         df_summarized = df_summarized[cols]
-        write_data(df_summarized, client, document_name, out_sheet, write_mode, False)
+        write_data(df_summarized, client, document_name, out_worksheet_name, write_mode, False)
         sleep(90)
         #max_attempts = 3
         #attempts = 0
@@ -253,7 +253,7 @@ def process_data(document_name, client):
 
 
 def sensor_health(client, df, document_name, out_worksheet_health_name):
-    out_sheet_health = client.open(document_name).worksheet(out_worksheet_health_name)
+    #out_sheet_health = client.open(document_name).worksheet(out_worksheet_health_name)
     # Compare the A&B channels and calculate percent good data.
     # Remove data when channels differ by >= +- 5 ug/m^3 and >= +- 70%
     sensor_health_list = []
@@ -280,7 +280,7 @@ def sensor_health(client, df, document_name, out_worksheet_health_name):
     df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR', 3: 'RSSI', 4: 'UPTIME'}, axis=1)
     df_health['CONFIDENCE'] = df_health['CONFIDENCE'].round(2)
     df_health = df_health.sort_values(by=['NAME'])
-    write_data(df_health, client, document_name, out_sheet_health, write_mode, False)
+    write_data(df_health, client, document_name, out_worksheet_health_name, write_mode, False)
     sleep(20)
     #max_attempts = 3
     #attempts = 0
@@ -301,7 +301,8 @@ def sensor_health(client, df, document_name, out_worksheet_health_name):
 def regional_stats(client, document_name):
     data_list = []
     write_mode = 'update'
-    out_sheet_regional = client.open(document_name).worksheet("Regional")
+    out_worksheet_regional_name = 'Regional'
+    #out_sheet_regional = client.open(document_name).worksheet("Regional")
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
     for k, v in config.bbox_dict.items():
         worksheet_name = v[1] + " Proc"
@@ -319,7 +320,7 @@ def regional_stats(client, document_name):
             df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
             df_combined = pd.DataFrame()
             data_list = []
-            write_data(df_regional_stats, client, document_name, out_sheet_regional, write_mode, False)
+            write_data(df_regional_stats, client, document_name, out_worksheet_regional_name, write_mode, False)
             sleep(90)
             #max_attempts = 3
             #attempts = 0
