@@ -1,7 +1,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230503
+# James S. Lucas - 20230504
 
 import sys
 import requests
@@ -80,7 +80,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     return df
 
 
-def write_data(df, client, document_name, worksheet_name, write_mode, write_csv):
+def write_data(df, client, document_name, worksheet_name, write_mode, write_csv=False):
     max_attempts = 3
     attempts = 0
     while attempts < max_attempts:
@@ -231,7 +231,7 @@ def process_data(document_name, client):
         df_summarized[cols_7] = df_summarized[cols_7].round(2)
         df_summarized[cols_8] = df_summarized[cols_8].astype(int)
         df_summarized = df_summarized[cols]
-        write_data(df_summarized, client, document_name, out_worksheet_name, write_mode, False)
+        write_data(df_summarized, client, document_name, out_worksheet_name, write_mode)
         sleep(90)
     return df_tv
 
@@ -263,7 +263,7 @@ def sensor_health(client, df, document_name, out_worksheet_health_name):
     df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR', 3: 'RSSI', 4: 'UPTIME'}, axis=1)
     df_health['CONFIDENCE'] = df_health['CONFIDENCE'].round(2)
     df_health = df_health.sort_values(by=['NAME'])
-    write_data(df_health, client, document_name, out_worksheet_health_name, write_mode, False)
+    write_data(df_health, client, document_name, out_worksheet_health_name, write_mode)
     sleep(20)
 
 
@@ -288,7 +288,7 @@ def regional_stats(client, document_name):
             df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
             df_combined = pd.DataFrame()
             data_list = []
-            write_data(df_regional_stats, client, document_name, out_worksheet_regional_name, write_mode, False)
+            write_data(df_regional_stats, client, document_name, out_worksheet_regional_name, write_mode)
             sleep(90)
 
 
@@ -296,11 +296,11 @@ def main():
     five_min_ago = datetime.now() - timedelta(minutes=5)
     for k, v in config.bbox_dict.items():
         df = get_data(five_min_ago, config.bbox_dict.get(k)[0])
-        if df.empty:
-            pass
-        else:
+        if len(df.index) > 0:
             write_mode = 'append'
             write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], write_mode, config.write_csv)
+        else:
+            pass
     local_interval_start = datetime.now()
     regional_interval_start = datetime.now()
     process_interval_start = datetime.now()
