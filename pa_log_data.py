@@ -210,7 +210,7 @@ def process_data(document_name, client):
         df = df.set_index('time_stamp')
         df[cols_6] = df[cols_6].replace('', 0)
         df[cols_6] = df[cols_6].astype(float)
-        df_summarized = df.groupby('name').resample('1H').mean(numeric_only=True)
+        df_summarized = df.groupby('name').resample(config.process_resample_rule).mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
@@ -256,7 +256,7 @@ def sensor_health(client, df, document_name, out_worksheet_health_name):
         except KeyError as e:
             pct_good = 1.00
         max_delta = df_grouped.get_group(k)['pm2.5_atm_dif'].max()
-        signal_strength = df_grouped.get_group(k)['rssi'].max()
+        signal_strength = df_grouped.get_group(k)['rssi'].mean()
         uptime = df_grouped.get_group(k)['uptime'].max()
         sensor_health_list.append([k.upper(), pct_good, max_delta, signal_strength, uptime])
     df_health = pd.DataFrame(sensor_health_list)
