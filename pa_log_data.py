@@ -1,7 +1,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230504
+# James S. Lucas - 20230507
 
 import sys
 import requests
@@ -61,7 +61,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     try:
         response = session.get(url)
     except Exception as e:
-        logging.exception("get_data error:\n%s" % e)
+        logging.exception("get_data error")
         df = pd.DataFrame()
         return df
     if response.ok:
@@ -76,7 +76,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         df = df[cols]
     else:
         df = df=pd.DataFrame()
-        logging.exception("get_data() response not ok:\n%s")
+        logging.exception("get_data() response not ok")
     return df
 
 
@@ -93,18 +93,18 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
                 sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option="USER_ENTERED")
             break
         except gspread.exceptions.APIError as e:
-            logging.exception("gspread error in write_data():\n%s" % e)
+            logging.exception("gspread error in write_data()")
             attempts += 1
             if attempts < max_attempts:
                 sleep(60)
             else:
-                logging.exception("gspread error in write_data() max attempts reached:\n%s" % e)  
+                logging.exception("gspread error in write_data() max attempts reached")  
     # append the data to Google Sheets 
     if WRITE_CSV is True:
         try:
             df.to_csv(output_pathname, index=True, header=True)
         except Exception as e:
-            logging.exception("write_data() error writing csv:\n%s" % e)
+            logging.exception("write_data() error writing csv")
 
 
 def calc_aqi(PM2_5):
@@ -151,7 +151,7 @@ def calc_aqi(PM2_5):
             ))
         return Ipm25
     except Exception as e:
-        logging.exception("calc_aqi() error:\n%s" % e)
+        logging.exception("calc_aqi() error")
 
 
 def calc_epa(PM2_5, RH):
@@ -169,7 +169,7 @@ def calc_epa(PM2_5, RH):
             PM2_5_epa = 0
         return PM2_5_epa
     except Exception as e:
-        logging.exception("calc_epa() error:\n%s" % e)
+        logging.exception("calc_epa() error")
 
 
 def process_data(DOCUMENT_NAME, client):
