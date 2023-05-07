@@ -30,7 +30,7 @@ session.mount('http://', adapter)
 session.mount('https://', adapter)
 file_name: str = 'pa_log_test.csv'
 if sys.platform == 'win32':
-    output_pathname: str = Path(config.matrix5, file_name)
+    output_pathname: str = Path(config.MATRIX5, file_name)
 elif sys.platform == 'linux':
     cwd: str = Path.cwd()
     output_pathname: str = Path(cwd, file_name)
@@ -38,7 +38,7 @@ elif sys.platform == 'linux':
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
                     ]
-creds = ServiceAccountCredentials.from_json_keyfile_name(config.gspread_service_account_json_path, scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
 
@@ -80,13 +80,13 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     return df
 
 
-def write_data(df, client, document_name, worksheet_name, write_mode, write_csv=False):
+def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=False):
     max_attempts = 3
     attempts = 0
     while attempts < max_attempts:
         try:
             # open the Google Sheets output worksheet
-            sheet = client.open(document_name).worksheet(worksheet_name)
+            sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
             if write_mode == 'append':
                 sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
             elif write_mode == 'update':
@@ -100,7 +100,7 @@ def write_data(df, client, document_name, worksheet_name, write_mode, write_csv=
             else:
                 logging.exception("gspread error in write_data() max attempts reached:\n%s" % e)  
     # append the data to Google Sheets 
-    if write_csv:
+    if WRITE_CSV:
         try:
             df.to_csv(output_pathname, index=True, header=True)
         except Exception as e:
@@ -172,7 +172,7 @@ def calc_epa(PM2_5, RH):
         logging.exception("calc_epa() error:\n%s" % e)
 
 
-def process_data(document_name, client):
+def process_data(DOCUMENT_NAME, client):
     write_mode = 'update'
     cols_1 = ['time_stamp']
     cols_2 = ['sensor_index', 'name', 'latitude', 'longitude']
@@ -185,11 +185,11 @@ def process_data(document_name, client):
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
     cols_8 = ['pm25_epa', 'Ipm25']
     cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
-    for k, v in config.bbox_dict.items():
+    for k, v in config.BBOX_DICT.items():
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
         out_worksheet_name: str = k + " Proc"
-        in_sheet = client.open(document_name).worksheet(in_worksheet_name)
+        in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
         if k == "TV":
             df_tv = df.copy()
@@ -210,7 +210,7 @@ def process_data(document_name, client):
         df = df.set_index('time_stamp')
         df[cols_6] = df[cols_6].replace('', 0)
         df[cols_6] = df[cols_6].astype(float)
-        df_summarized = df.groupby('name').resample(config.process_resample_rule).mean(numeric_only=True)
+        df_summarized = df.groupby('name').resample(config.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
@@ -231,12 +231,12 @@ def process_data(document_name, client):
         df_summarized[cols_7] = df_summarized[cols_7].round(2)
         df_summarized[cols_8] = df_summarized[cols_8].astype(int)
         df_summarized = df_summarized[cols]
-        write_data(df_summarized, client, document_name, out_worksheet_name, write_mode)
+        write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
     return df_tv
 
 
-def sensor_health(client, df, document_name, out_worksheet_health_name):
+def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     # Compare the A&B channels and calculate percent good data.
     # Remove data when channels differ by >= +- 5 ug/m^3 and >= +- 70%
     sensor_health_list = []
@@ -263,19 +263,19 @@ def sensor_health(client, df, document_name, out_worksheet_health_name):
     df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR', 3: 'RSSI', 4: 'UPTIME'}, axis=1)
     df_health['CONFIDENCE'] = df_health['CONFIDENCE'].round(2)
     df_health = df_health.sort_values(by=['NAME'])
-    write_data(df_health, client, document_name, out_worksheet_health_name, write_mode)
+    write_data(df_health, client, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME, write_mode)
     sleep(20)
 
 
-def regional_stats(client, document_name):
+def regional_stats(client, DOCUMENT_NAME):
     data_list = []
     write_mode = 'update'
     out_worksheet_regional_name = 'Regional'
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
-    for k, v in config.bbox_dict.items():
+    for k, v in config.BBOX_DICT.items():
         worksheet_name = v[1] + " Proc"
         # open the Google Sheets input worksheet
-        in_sheet = client.open(document_name).worksheet(worksheet_name)
+        in_sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
         data = in_sheet.get_all_records()
         if data:
             data_list.append(data) 
@@ -288,17 +288,17 @@ def regional_stats(client, document_name):
             df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
             df_combined = pd.DataFrame()
             data_list = []
-            write_data(df_regional_stats, client, document_name, out_worksheet_regional_name, write_mode)
+            write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
             sleep(90)
 
 
 def main():
     five_min_ago = datetime.now() - timedelta(minutes=5)
-    for k, v in config.bbox_dict.items():
-        df = get_data(five_min_ago, config.bbox_dict.get(k)[0])
+    for k, v in config.BBOX_DICT.items():
+        df = get_data(five_min_ago, config.BBOX_DICT.get(k)[0])
         if len(df.index) > 0:
             write_mode = 'append'
-            write_data(df, client, config.document_name, config.bbox_dict.get(k)[1], write_mode, config.write_csv)
+            write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(k)[1], write_mode, config.WRITE_CSV)
         else:
             pass
     local_interval_start = datetime.now()
@@ -310,26 +310,26 @@ def main():
             local_interval_et = (datetime.now() - local_interval_start).total_seconds()
             regional_interval_et = (datetime.now() - regional_interval_start).total_seconds()
             process_interval_et = (datetime.now() - process_interval_start).total_seconds()
-            if local_interval_et >= config.local_interval_duration:
-                df_local = get_data(local_interval_start, config.bbox_dict.get("TV")[0])
+            if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
+                df_local = get_data(local_interval_start, config.BBOX_DICT.get("TV")[0])
                 if len (df_local.index) > 0:
                     write_mode = 'append'
-                    write_data(df_local, client, config.document_name, config.local_worksheet_name, write_mode, config.write_csv)
+                    write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
                 local_interval_start = datetime.now()
-            if regional_interval_et > config.regional_interval_duration:
-                for regional_key in config.regional_keys:
-                    df = get_data(regional_interval_start, config.bbox_dict.get(regional_key)[0]) 
+            if regional_interval_et > config.REGIONAL_INTERVAL_DURATION:
+                for regional_key in config.REGIONAL_KEYS:
+                    df = get_data(regional_interval_start, config.BBOX_DICT.get(regional_key)[0]) 
                     if len(df.index) > 0:
                         write_mode = 'append'
-                        write_data(df, client, config.document_name, config.bbox_dict.get(regional_key)[1], write_mode, config.write_csv)
+                        write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(regional_key)[1], write_mode, config.WRITE_CSV)
                     sleep(10)
                 regional_interval_start = datetime.now()
-            if process_interval_et > config.process_interval_duration:
-                df = process_data(config.document_name, client)
+            if process_interval_et > config.PROCESS_INTERVAL_DURATION:
+                df = process_data(config.DOCUMENT_NAME, client)
                 process_interval_start = datetime.now()
                 if len(df.index) > 0:
-                    sensor_health(client, df, config.document_name, config.out_worksheet_health_name)
-                    regional_stats(client, config.document_name)
+                    sensor_health(client, df, config.DOCUMENT_NAME, config.OUT_WORKSHEET_HEALTH_NAME)
+                    regional_stats(client, config.DOCUMENT_NAME)
         except KeyboardInterrupt:
             sys.exit()
 
