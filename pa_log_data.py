@@ -116,16 +116,16 @@ def calc_aqi(PM2_5):
     PM2_5 = int(PM2_5 * 10) / 10.0
     if PM2_5 < 0:
         PM2_5 = 0
-    #AQI breakpoints [0,    1,     2,    3    ]
-    #                [Ilow, Ihigh, Clow, Chigh]
+    #AQI breakpoints (0,    1,     2,    3    )
+    #                (Ilow, Ihigh, Clow, Chigh)
     pm25_aqi = {
-        'good': [0, 50, 0, 12],
-        'moderate': [51, 100, 12.1, 35.4],
-        'sensitive': [101, 150, 35.5, 55.4],
-        'unhealthy': [151, 200, 55.5, 150.4],
-        'very': [201, 300, 150.5, 250.4],
-        'hazardous': [301, 500, 250.5, 500.4],
-        'beyond_aqi': [301, 500, 250.5, 500.4]
+        'good': (0, 50, 0, 12),
+        'moderate': (51, 100, 12.1, 35.4),
+        'sensitive': (101, 150, 35.5, 55.4),
+        'unhealthy': (151, 200, 55.5, 150.4),
+        'very': (201, 300, 150.5, 250.4),
+        'hazardous': (301, 500, 250.5, 500.4),
+        'beyond_aqi': (301, 500, 250.5, 500.4)
         }
     try:
         if (0.0 <= PM2_5 <= 12.0):
@@ -262,6 +262,7 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     df_health = pd.DataFrame(sensor_health_list)
     df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR', 3: 'RSSI', 4: 'UPTIME'}, axis=1)
     df_health['CONFIDENCE'] = df_health['CONFIDENCE'].round(2)
+    df_health['rssi'] = df_health['rssi'].round(2)
     df_health = df_health.sort_values(by=['NAME'])
     write_data(df_health, client, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME, write_mode)
     sleep(20)
