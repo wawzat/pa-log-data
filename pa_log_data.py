@@ -100,7 +100,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
             else:
                 logging.exception("gspread error in write_data() max attempts reached:\n%s" % e)  
     # append the data to Google Sheets 
-    if WRITE_CSV:
+    if WRITE_CSV is True:
         try:
             df.to_csv(output_pathname, index=True, header=True)
         except Exception as e:
