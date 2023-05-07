@@ -56,8 +56,8 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         'nwlat': bbox[3],
         'et': et_since
     }
-    url = root_url.format(**params)
-    cols = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
+    url: str = root_url.format(**params)
+    cols: List[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
     try:
         response = session.get(url)
     except Exception as e:
@@ -113,7 +113,7 @@ def calc_aqi(PM2_5):
     # 24 hour midnight-midnight average. May change to NowCast or other
     # methodology in the future.
     # Truncate to one decimal place.
-    PM2_5 = int(PM2_5 * 10) / 10.0
+    PM2_5: int = int(PM2_5 * 10) / 10.0
     if PM2_5 < 0:
         PM2_5 = 0
     #AQI breakpoints (0,    1,     2,    3    )
@@ -173,18 +173,18 @@ def calc_epa(PM2_5, RH):
 
 
 def process_data(DOCUMENT_NAME, client):
-    write_mode = 'update'
-    cols_1 = ['time_stamp']
-    cols_2 = ['sensor_index', 'name', 'latitude', 'longitude']
-    cols_3 = ['altitude']
-    cols_4 = ['rssi']
-    cols_5 = ['uptime']
-    cols_6 = ['humidity', 'temperature', 'pressure', 'voc']
-    cols_7 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
+    write_mode: str = 'update'
+    cols_1: List[str] = ['time_stamp']
+    cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
+    cols_3: List[str] = ['altitude']
+    cols_4: List[str] = ['rssi']
+    cols_5: List[str] = ['uptime']
+    cols_6: List[str] = ['humidity', 'temperature', 'pressure', 'voc']
+    cols_7: List[str] = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
             'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
-    cols_8 = ['pm25_epa', 'Ipm25']
-    cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
+    cols_8: List[str] = ['pm25_epa', 'Ipm25']
+    cols: List[str] = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
     for k, v in config.BBOX_DICT.items():
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
@@ -240,7 +240,7 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     # Compare the A&B channels and calculate percent good data.
     # Remove data when channels differ by >= +- 5 ug/m^3 and >= +- 70%
     sensor_health_list = []
-    write_mode = 'update'
+    write_mode: str = 'update'
     df['pm2.5_atm_dif'] = abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b'])
     df_good = df[(
         df['pm2.5_atm_a']-df['pm2.5_atm_b']
@@ -270,8 +270,8 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
 
 def regional_stats(client, DOCUMENT_NAME):
     data_list = []
-    write_mode = 'update'
-    out_worksheet_regional_name = 'Regional'
+    write_mode: str = 'update'
+    out_worksheet_regional_name: str = 'Regional'
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
     for k, v in config.BBOX_DICT.items():
         worksheet_name = v[1] + " Proc"
@@ -294,7 +294,7 @@ def regional_stats(client, DOCUMENT_NAME):
 
 
 def main():
-    five_min_ago = datetime.now() - timedelta(minutes=5)
+    five_min_ago: datetime = datetime.now() - timedelta(minutes=5)
     for k, v in config.BBOX_DICT.items():
         df = get_data(five_min_ago, config.BBOX_DICT.get(k)[0])
         if len(df.index) > 0:
@@ -302,32 +302,32 @@ def main():
             write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(k)[1], write_mode, config.WRITE_CSV)
         else:
             pass
-    local_interval_start = datetime.now()
-    regional_interval_start = datetime.now()
-    process_interval_start = datetime.now()
+    local_interval_start: datetime = datetime.now()
+    regional_interval_start: datetime = datetime.now()
+    process_interval_start: datetime = datetime.now()
     while True:
         try:
             sleep(1)
-            local_interval_et = (datetime.now() - local_interval_start).total_seconds()
-            regional_interval_et = (datetime.now() - regional_interval_start).total_seconds()
-            process_interval_et = (datetime.now() - process_interval_start).total_seconds()
+            local_interval_et: int = (datetime.now() - local_interval_start).total_seconds()
+            regional_interval_et: int = (datetime.now() - regional_interval_start).total_seconds()
+            process_interval_et: int = (datetime.now() - process_interval_start).total_seconds()
             if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
                 df_local = get_data(local_interval_start, config.BBOX_DICT.get("TV")[0])
                 if len (df_local.index) > 0:
                     write_mode = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
-                local_interval_start = datetime.now()
+                local_interval_start: datetime = datetime.now()
             if regional_interval_et > config.REGIONAL_INTERVAL_DURATION:
                 for regional_key in config.REGIONAL_KEYS:
                     df = get_data(regional_interval_start, config.BBOX_DICT.get(regional_key)[0]) 
                     if len(df.index) > 0:
-                        write_mode = 'append'
+                        write_mode: str = 'append'
                         write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(regional_key)[1], write_mode, config.WRITE_CSV)
                     sleep(10)
-                regional_interval_start = datetime.now()
+                regional_interval_start: datetime = datetime.now()
             if process_interval_et > config.PROCESS_INTERVAL_DURATION:
                 df = process_data(config.DOCUMENT_NAME, client)
-                process_interval_start = datetime.now()
+                process_interval_start: datetime = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, config.DOCUMENT_NAME, config.OUT_WORKSHEET_HEALTH_NAME)
                     regional_stats(client, config.DOCUMENT_NAME)
