@@ -262,7 +262,7 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     df_health = pd.DataFrame(sensor_health_list)
     df_health = df_health.rename({0: 'NAME', 1: 'CONFIDENCE', 2: 'MAX ERROR', 3: 'RSSI', 4: 'UPTIME'}, axis=1)
     df_health['CONFIDENCE'] = df_health['CONFIDENCE'].round(2)
-    df_health['rssi'] = df_health['rssi'].round(2)
+    df_health['RSSI'] = df_health['RSSI'].round(2)
     df_health = df_health.sort_values(by=['NAME'])
     write_data(df_health, client, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME, write_mode)
     sleep(20)
