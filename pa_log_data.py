@@ -18,7 +18,7 @@ import logging
 from typing import Dict, List
 import config
 
-format_string = "%(name)s - %(asctime)s : %(message)s"
+format_string = '%(name)s - %(asctime)s : %(message)s'
 logging.basicConfig(filename='error.log',
                     format = format_string)
 
@@ -43,6 +43,19 @@ client = gspread.authorize(creds)
 
 
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
+    """
+    A function that queries the PurpleAir API for sensor data within a given bounding box and time frame.
+
+    Args:
+        previous_time (datetime): A datetime object representing the time of the last query.
+        bbox (List[float]): A list of four floats representing the bounding box of the area of interest.
+            The order is [northwest longitude, southeast latitude, southeast longitude, northwest latitude].
+
+    Returns:
+        A pandas DataFrame containing sensor data for the specified area and time frame. The DataFrame will contain columns
+        for the timestamp of the data, the index of the sensor, and various sensor measurements such as temperature,
+        humidity, and PM2.5 readings.
+    """
     root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
     et_since = int((datetime.now() - previous_time + timedelta(seconds=20)).total_seconds())
     params: Dict[str, str] = {
@@ -61,7 +74,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     try:
         response = session.get(url)
     except Exception as e:
-        logging.exception("get_data error")
+        logging.exception('get_data error')
         df = pd.DataFrame()
         return df
     if response.ok:
@@ -76,43 +89,68 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         df = df[cols]
     else:
         df = df=pd.DataFrame()
-        logging.exception("get_data() response not ok")
+        logging.exception('get_data() response not ok')
     return df
 
 
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=False):
-    max_attempts = 3
-    attempts = 0
-    while attempts < max_attempts:
+    """
+    Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data to be written.
+        client (gspread.client.Client): A client object for accessing the Google Sheets API.
+        DOCUMENT_NAME (str): The name of the Google Sheets document to write to.
+        worksheet_name (str): The name of the worksheet to write the data to.
+        write_mode (str): The mode for writing the data to the worksheet. Either "append" or "update".
+        WRITE_CSV (bool, optional): Whether to also write the DataFrame to a CSV file. Defaults to False.
+
+    Raises:
+        Exception: If an error occurs during the writing process.
+
+    Returns:
+        None
+    """
+    MAX_ATTEMPTS: int = 3
+    attempts: int = 0
+    while attempts < MAX_ATTEMPTS:
         try:
             # open the Google Sheets output worksheet
             sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
             if write_mode == 'append':
                 sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
             elif write_mode == 'update':
-                sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option="USER_ENTERED")
+                sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
             break
         except gspread.exceptions.APIError as e:
-            logging.exception("gspread error in write_data()")
+            logging.exception('gspread error in write_data()')
             attempts += 1
-            if attempts < max_attempts:
+            if attempts < MAX_ATTEMPTS:
                 sleep(60)
             else:
-                logging.exception("gspread error in write_data() max attempts reached")  
+                logging.exception('gspread error in write_data() max attempts reached')  
     # append the data to Google Sheets 
     if WRITE_CSV is True:
         try:
             df.to_csv(output_pathname, index=True, header=True)
         except Exception as e:
-            logging.exception("write_data() error writing csv")
+            logging.exception('write_data() error writing csv')
 
 
 def calc_aqi(PM2_5):
-    # Function takes the 24-hour rolling average PM2.5 value and calculates
-    # "AQI". "AQI" in quotes as this is not an official methodology. AQI is 
-    # 24 hour midnight-midnight average. May change to NowCast or other
-    # methodology in the future.
-    # Truncate to one decimal place.
+    """
+    Calculate the Air Quality Index (AQI) based on the input value of PM2.5.
+
+    Parameters:
+    ----------
+    PM2_5 : int
+        The PM2.5 concentration in μg/m³.
+
+    Returns:
+    -------
+    int
+        The corresponding AQI value for the given PM2.5 concentration.
+    """
     PM2_5: int = int(PM2_5 * 10) / 10.0
     if PM2_5 < 0:
         PM2_5 = 0
@@ -151,13 +189,32 @@ def calc_aqi(PM2_5):
             ))
         return Ipm25
     except Exception as e:
-        logging.exception("calc_aqi() error")
+        logging.exception('calc_aqi() error')
 
 
 def calc_epa(PM2_5, RH):
-    #0-250 ug/m3 range (>250 may underestimate true PM2.5):
-    #PM2.5 (µg/m³) = 0.534 x PA(cf_1) - 0.0844 x RH + 5.604
-    #PM2_5_epa = 0.534 * PM2_5 - 0.0844 * RH + 5.604
+    """
+    Calculate the EPA conversion for PM 2.5 (particulate matter less than 2.5 micrometers in diameter) and relative humidity (RH) values.
+
+    Args:
+        PM2_5 (float): The PM 2.5 concentration in micrograms per cubic meter (μg/m^3).
+        RH (float): The relative humidity as a percentage (%).
+
+    Returns:
+        float: The the EPA converted value for PM 2.5 calculated using the given PM2.5 and RH values.
+
+    Raises:
+        Exception: If there was an error while calculating the EPA AQI.
+
+    Notes:
+        - If either PM2_5 or RH is a string, the EPA AQI will be set to 0.
+        - For PM2.5 values less than or equal to 343 μg/m^3, the following formula is used:
+            AQI = 0.52 * PM2.5 - 0.086 * RH + 5.75
+        - For PM2.5 values greater than 343 μg/m^3, the following formula is used:
+            AQI = 0.46 * PM2.5 + 3.93e-4 * PM2.5^2 + 2.97
+        - For negative or other invalid PM2.5 values, the EPA AQI will be set to 0.
+
+    """
     try: 
         if any(isinstance(x, str) for x in (PM2_5, RH)):
             PM2_5_epa = 0
@@ -169,10 +226,25 @@ def calc_epa(PM2_5, RH):
             PM2_5_epa = 0
         return PM2_5_epa
     except Exception as e:
-        logging.exception("calc_epa() error")
+        logging.exception('calc_epa() error')
 
 
 def process_data(DOCUMENT_NAME, client):
+    """Process data from a Google Sheets document and clean it for analysis.
+
+    Args:
+        DOCUMENT_NAME (str): The name of the Google Sheets document to be processed.
+        client: The Google Sheets client object.
+
+    Returns:
+        A cleaned and summarized pandas DataFrame with the following columns:
+        'time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude', 'rssi',
+        'uptime', 'humidity', 'temperature', 'pressure', 'voc', 'pm1.0_atm_a',
+        'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
+        'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a', 'pm2.5_cf_1_b', 'pm10.0_cf_1_a',
+        'pm10.0_cf_1_b', '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count',
+        '5.0_um_count', '10.0_um_count', 'pm25_epa', 'Ipm25'.
+    """
     write_mode: str = 'update'
     cols_1: List[str] = ['time_stamp']
     cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
@@ -188,10 +260,10 @@ def process_data(DOCUMENT_NAME, client):
     for k, v in config.BBOX_DICT.items():
         # open the Google Sheets input worksheet
         in_worksheet_name: str = k
-        out_worksheet_name: str = k + " Proc"
+        out_worksheet_name: str = k + ' Proc'
         in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
-        if k == "TV":
+        if k == 'TV':
             df_tv = df.copy()
         df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
@@ -237,8 +309,25 @@ def process_data(DOCUMENT_NAME, client):
 
 
 def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
-    # Compare the A&B channels and calculate percent good data.
-    # Remove data when channels differ by >= +- 5 ug/m^3 and >= +- 70%
+    """
+    Analyzes air quality sensor data and calculates the performance of each sensor.
+
+    Args:
+        client (object): A client object used to access a Google Sheets API.
+        df (pandas.DataFrame): A DataFrame containing air quality sensor data.
+        DOCUMENT_NAME (str): The name of the Google Sheets document to write the output to.
+        OUT_WORKSHEET_HEALTH_NAME (str): The name of the worksheet to write the health data to.
+
+    Returns:
+        None
+
+    This function compares the readings from two PurpleAir sensor channels (A and B) and removes data points where the difference
+    is greater than or equal to 5 ug/m^3 and 70%. For each sensor, it calculates the percentage of "good" data points,
+    which is defined as the percentage of data points that passed the threshold check. 
+    It also calculates the maximum delta between the A and B channels,
+    the mean signal strength (RSSI), and the maximum uptime for each sensor. 
+    The output is written to a specified Google Sheets document worksheet.
+    """
     sensor_health_list = []
     write_mode: str = 'update'
     df['pm2.5_atm_dif'] = abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b'])
@@ -274,7 +363,7 @@ def regional_stats(client, DOCUMENT_NAME):
     out_worksheet_regional_name: str = 'Regional'
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
     for k, v in config.BBOX_DICT.items():
-        worksheet_name = v[1] + " Proc"
+        worksheet_name = v[1] + ' Proc'
         # open the Google Sheets input worksheet
         in_sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
         data = in_sheet.get_all_records()
@@ -312,7 +401,7 @@ def main():
             regional_interval_et: int = (datetime.now() - regional_interval_start).total_seconds()
             process_interval_et: int = (datetime.now() - process_interval_start).total_seconds()
             if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
-                df_local = get_data(local_interval_start, config.BBOX_DICT.get("TV")[0])
+                df_local = get_data(local_interval_start, config.BBOX_DICT.get('TV')[0])
                 if len (df_local.index) > 0:
                     write_mode = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
