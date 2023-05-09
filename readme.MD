@@ -29,6 +29,7 @@
         - Regional
  
     - The two character sheets will contain raw logged data and the sheets with a "Proc" suffix will contain processed data for each corresponding region.
+    - Name the Google Sheets worksheet document with the name you provided for DOCUMENT_NAME in config.py 
 
 - Setup an application and API keys for Google Sheets. https://developers.google.com/workspace/guides/create-credentials 
 - Read the gspread documentation for authenication instructions. https://docs.gspread.org/en/v5.7.2/oauth2.html 
