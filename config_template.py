@@ -14,9 +14,11 @@ BBOX_DICT = { 'DT': (('-118.5298', '35.7180', '-118.4166', '35.8188'), 'DT', 'De
 'CP': (('-118.807770', '35.901766', '-118.550964', '35.079394'), 'CP', 'Cirrus Park')
 }
 
+# Durations in seconds
 LOCAL_INTERVAL_DURATION: int = 1200
 REGIONAL_INTERVAL_DURATION: int = 3800
 PROCESS_INTERVAL_DURATION: int = 5000
+
 PROCESS_RESAMPLE_RULE: str = '2H'
 WRITE_CSV: bool = False
 
