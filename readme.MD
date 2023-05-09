@@ -10,10 +10,10 @@
 - Manually create empty Google Sheets sheets with names corresponding to regions.
   - For example if your BBOX_DICT is per below:
     - BBOX_DICT = {
-        'DT': (('-118.5298', '35.7180', '-118.4166', '35.8188'), 'DT, 'Delta Transit'), 
-        'QC': (('-118.455864', '35.855306', '-118.185326', '35.018518'), 'Qual College)' 
-        'YB': (('-118.877808', '35.650065', '-118.628899', '35.776579'), 'YB', 'Yucatan Borrego'), 
-        'CP': (('-118.807770', '35.901766', '-118.550964', '35.079394'), 'CP', 'Cirrus Park') 
+        'DT': (('-118.5298', '35.7180', '-118.4166', '35.8188'), 'DT, 'Delta Transit'),  
+        'QC': (('-118.455864', '35.855306', '-118.185326', '35.018518'), 'Qual College)'  
+        'YB': (('-118.877808', '35.650065', '-118.628899', '35.776579'), 'YB', 'Yucatan Borrego'),  
+        'CP': (('-118.807770', '35.901766', '-118.550964', '35.079394'), 'CP', 'Cirrus Park')  
         }
     - You would create Google sheets with the following names:
         - DT
