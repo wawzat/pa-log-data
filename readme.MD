@@ -29,7 +29,7 @@
  
     - The two character sheets will contain raw logged data and the sheets with a "Proc" suffix will contain processed data for each corresponding region.
 
-- Search Google for istructions for how to setup an application and API keys for Google Sheets. https://developers.google.com/workspace/guides/create-credentials 
+- Search Google for instructions for how to setup an application and API keys for Google Sheets. https://developers.google.com/workspace/guides/create-credentials 
 - PurpleAir API keys may be obtained from PurpleAir. https://community.purpleair.com/t/creating-api-keys/3951 
 - Sensor data are gathered for a "local" region and other regions as defined in config.py.
 - Sensor Confidence is calculated as the percentage of data discarded after cleaning with EPA criteria and may not match displayed PurpleAir Confidence percentages.
