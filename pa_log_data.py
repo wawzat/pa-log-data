@@ -120,6 +120,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
             if write_mode == 'append':
                 sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
             elif write_mode == 'update':
+                sheet.clear()
                 sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
             break
         except gspread.exceptions.APIError as e:
@@ -194,14 +195,14 @@ def calc_aqi(PM2_5):
 
 def calc_epa(PM2_5, RH):
     """
-    Calculate the EPA conversion for PM 2.5 (particulate matter less than 2.5 micrometers in diameter) and relative humidity (RH) values.
+    Calculate the EPA conversion for PM2.5 and relative humidity (RH) values.
 
     Args:
-        PM2_5 (float): The PM 2.5 concentration in micrograms per cubic meter (μg/m^3).
+        PM2_5 (float): The PM2.5 concentration in micrograms per cubic meter (μg/m^3).
         RH (float): The relative humidity as a percentage (%).
 
     Returns:
-        float: The the EPA converted value for PM 2.5 calculated using the given PM2.5 and RH values.
+        float: The the EPA converted value for PM2.5 calculated using the given PM2.5 and RH values.
 
     Raises:
         Exception: If there was an error while calculating the EPA AQI.
@@ -212,7 +213,7 @@ def calc_epa(PM2_5, RH):
             AQI = 0.52 * PM2.5 - 0.086 * RH + 5.75
         - For PM2.5 values greater than 343 μg/m^3, the following formula is used:
             AQI = 0.46 * PM2.5 + 3.93e-4 * PM2.5^2 + 2.97
-        - For negative or other invalid PM2.5 values, the EPA AQI will be set to 0.
+        - For negative or other invalid PM2.5 values, the EPA converted value will be set to 0.
 
     """
     try: 
@@ -230,7 +231,9 @@ def calc_epa(PM2_5, RH):
 
 
 def process_data(DOCUMENT_NAME, client):
-    """Process data from a Google Sheets document and clean it for analysis.
+    """
+    Process data from Google Sheets sheets for each region. Data is cleaned, summarized and various values are calculated. Data are saved to
+    different worksheets in the same Google Sheets document.
 
     Args:
         DOCUMENT_NAME (str): The name of the Google Sheets document to be processed.
@@ -324,24 +327,24 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     This function compares the readings from two PurpleAir sensor channels (A and B) and removes data points where the difference
     is greater than or equal to 5 ug/m^3 and 70%. For each sensor, it calculates the percentage of "good" data points,
     which is defined as the percentage of data points that passed the threshold check. 
-    It also calculates the maximum delta between the A and B channels,
+    It also calculates the maximum difference between the A and B channels,
     the mean signal strength (RSSI), and the maximum uptime for each sensor. 
     The output is written to a specified Google Sheets document worksheet.
     """
     sensor_health_list = []
     write_mode: str = 'update'
     df['pm2.5_atm_dif'] = abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b'])
-    df_good = df[(
+    df_bad = df[(
         df['pm2.5_atm_a']-df['pm2.5_atm_b']
         ).abs() >= 5.0]
-    df_good = df_good[((
-        (df_good['pm2.5_atm_a'] - df_good['pm2.5_atm_b']).abs()
-        ) / ((df_good['pm2.5_atm_a'] + df_good['pm2.5_atm_b']) / 2)) >= 0.7]
+    df_bad = df_bad[((
+        (df_bad['pm2.5_atm_a'] - df_bad['pm2.5_atm_b']).abs()
+        ) / ((df_bad['pm2.5_atm_a'] + df_bad['pm2.5_atm_b']) / 2)) >= 0.7]
     df_grouped = df.groupby('name')
-    df_good_grouped = df_good.groupby('name')
+    df_bad_grouped = df_bad.groupby('name')
     for k, v in df_grouped:
         try:
-            pct_good = (df_grouped.get_group(k).shape[0] - df_good_grouped.get_group(k).shape[0]) / df_grouped.get_group(k).shape[0]
+            pct_good = (df_grouped.get_group(k).shape[0] - df_bad_grouped.get_group(k).shape[0]) / df_grouped.get_group(k).shape[0]
         except KeyError as e:
             pct_good = 1.00
         max_delta = df_grouped.get_group(k)['pm2.5_atm_dif'].max()
