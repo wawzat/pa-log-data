@@ -18,6 +18,7 @@ import logging
 from typing import Dict, List
 import config
 
+# Setup logging
 format_string = '%(name)s - %(asctime)s : %(message)s'
 logging.basicConfig(filename='error.log',
                     format = format_string)
@@ -88,7 +89,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         df['longitude'] = df['longitude'].astype(str)
         df = df[cols]
     else:
-        df = df=pd.DataFrame()
+        df = pd.DataFrame()
         logging.exception('get_data() response not ok')
     return df
 
@@ -115,7 +116,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
     attempts: int = 0
     while attempts < MAX_ATTEMPTS:
         try:
-            # open the Google Sheets output worksheet
+            # open the Google Sheets output worksheet and write the data
             sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
             if write_mode == 'append':
                 sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
@@ -130,7 +131,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
                 sleep(60)
             else:
                 logging.exception('gspread error in write_data() max attempts reached')  
-    # append the data to Google Sheets 
+    # Write the data to Google Sheets 
     if WRITE_CSV is True:
         try:
             df.to_csv(output_pathname, index=True, header=True)
@@ -217,6 +218,7 @@ def calc_epa(PM2_5, RH):
 
     """
     try: 
+        # If either PM2_5 or RH is a string, the EPA conversion value will be set to 0.
         if any(isinstance(x, str) for x in (PM2_5, RH)):
             PM2_5_epa = 0
         elif PM2_5 <= 343:
@@ -249,6 +251,7 @@ def process_data(DOCUMENT_NAME, client):
         '5.0_um_count', '10.0_um_count', 'pm25_epa', 'Ipm25'.
     """
     write_mode: str = 'update'
+    # define the columns to be included in the output in groups for later formatting
     cols_1: List[str] = ['time_stamp']
     cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
     cols_3: List[str] = ['altitude']
@@ -261,12 +264,13 @@ def process_data(DOCUMENT_NAME, client):
     cols_8: List[str] = ['pm25_epa', 'Ipm25']
     cols: List[str] = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
     for k, v in config.BBOX_DICT.items():
-        # open the Google Sheets input worksheet
+        # open the Google Sheets input worksheet and read in the data
         in_worksheet_name: str = k
         out_worksheet_name: str = k + ' Proc'
         in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
-        if k == 'TV':
+        # The first key in BBOX_DICT is for the local region. Save the df for later use by the sensor_health() function.
+        if k == config.BBOX_DICT.keys()[0]:
             df_tv = df.copy()
         df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
@@ -370,7 +374,7 @@ def regional_stats(client, DOCUMENT_NAME):
         # open the Google Sheets input worksheet
         in_sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
         data = in_sheet.get_all_records()
-        if data:
+        if len(data) > 0:
             data_list.append(data) 
             df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
             df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
@@ -406,7 +410,7 @@ def main():
             if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
                 df_local = get_data(local_interval_start, config.BBOX_DICT.get('TV')[0])
                 if len (df_local.index) > 0:
-                    write_mode = 'append'
+                    write_mode: str = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
                 local_interval_start: datetime = datetime.now()
             if regional_interval_et > config.REGIONAL_INTERVAL_DURATION:
