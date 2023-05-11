@@ -40,7 +40,8 @@
 - requirements.txt is included for installing the required non-standard Python libraries (i.e., pip: -r requirements.txt)
 - To prevent the Google Sheets document from becoming too large you should periodically archive data to another worksheet and delete data from the master document.
 - You can use the Google Sheets worksheet as source data for a Google Looker Studio dashboard. https://lookerstudio.google.com/ 
- 
+  
+  
  
 # sheet_size_reduce.py  
 
