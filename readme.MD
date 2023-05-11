@@ -40,3 +40,15 @@
 - requirements.txt is included for installing the required non-standard Python libraries (i.e., pip: -r requirements.txt)
 - To prevent the Google Sheets document from becoming too large you should periodically archive data to another worksheet and delete data from the master document.
 - You can use the Google Sheets worksheet as source data for a Google Looker Studio dashboard. https://lookerstudio.google.com/ 
+ 
+ 
+# sheet_size_reduce.py  
+
+## Python program to trim the earliest rows from a specified Google Sheets sheet.  
+
+### Notes:  
+
+- Edit the code to change defaults in the argparse section.
+- For performance reasons I typically only keep three to four weeks of data in my raw logged data sheets.
+- This program automates deleting old data.
+- I manually copy sheets to an archive folder each month.
