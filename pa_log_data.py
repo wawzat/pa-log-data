@@ -270,7 +270,8 @@ def process_data(DOCUMENT_NAME, client):
         in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
         df = pd.DataFrame(in_sheet.get_all_records())
         # The first key in BBOX_DICT is for the local region. Save the df for later use by the sensor_health() function.
-        if k == config.BBOX_DICT.keys()[0]:
+        first_key = next(iter(config.BBOX_DICT))
+        if k == first_key:
             df_tv = df.copy()
         df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
