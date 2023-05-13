@@ -252,7 +252,7 @@ def process_data(DOCUMENT_NAME, client):
     """
     write_mode: str = 'update'
     # define the columns to be included in the output in groups for later formatting
-    cols_1: List[str] = ['time_stamp']
+    cols_1: List[str] = ['time_stamp', 'time_stamp_pacific']
     cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
     cols_3: List[str] = ['altitude']
     cols_4: List[str] = ['rssi']
@@ -267,8 +267,21 @@ def process_data(DOCUMENT_NAME, client):
         # open the Google Sheets input worksheet and read in the data
         in_worksheet_name: str = k
         out_worksheet_name: str = k + ' Proc'
-        in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
-        df = pd.DataFrame(in_sheet.get_all_records())
+        MAX_ATTEMPTS: int = 3
+        attempts: int = 0
+        while attempts < MAX_ATTEMPTS:
+            try:
+                in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
+                df = pd.DataFrame(in_sheet.get_all_records())
+                break
+            except gspread.exceptions.APIError as e:
+                attempts += 1
+                message = f'process_data() gspread error attempt #{attempts}'
+                logging.exception(message)
+                if attempts < MAX_ATTEMPTS:
+                    sleep(90)
+                else:
+                    logging.exception('process_data() gspread error max attempts reached')
         # The first key in BBOX_DICT is for the local region. Save the df for later use by the sensor_health() function.
         first_key = next(iter(config.BBOX_DICT))
         if k == first_key:
@@ -287,6 +300,7 @@ def process_data(DOCUMENT_NAME, client):
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
+        df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
         df = df.set_index('time_stamp')
         df[cols_6] = df[cols_6].replace('', 0)
         df[cols_6] = df[cols_6].astype(float)
