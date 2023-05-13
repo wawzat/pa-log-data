@@ -300,13 +300,14 @@ def process_data(DOCUMENT_NAME, client):
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
         )
-        df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
         df = df.set_index('time_stamp')
         df[cols_6] = df[cols_6].replace('', 0)
         df[cols_6] = df[cols_6].astype(float)
         df_summarized = df.groupby('name').resample(config.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
+        df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
+        df_summarized['time_stamp_pacific'] = df_summarized['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
