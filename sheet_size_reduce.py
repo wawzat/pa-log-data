@@ -39,16 +39,30 @@ def is_continuous(rows_to_delete):
     return True
 
 
+def delete_rows(sheet, sheet_name, rows_to_delete, num_rows, first_date, last_date):
+    if is_continuous(rows_to_delete) is True and len(rows_to_delete) > 0:
+        if len(rows_to_delete) == 1:
+            sheet.delete_row(rows_to_delete[0])
+        elif len(rows_to_delete) > 1:
+            sheet.delete_rows(min(rows_to_delete), max(rows_to_delete))
+        message = f'{str(num_rows)} rows from {first_date.strftime("%m/%d/%Y %H:%M:%S")} to {last_date.strftime("%m/%d/%Y %H:%M:%S")} have been deleted from "{sheet_name}".'
+        print(message)
+    else:
+        print('Rows to delete are not continuous, no data deleted.')
+
 def get_arguments():
     parser = argparse.ArgumentParser(
     description='Reduce Google Sheets File Size.',
-    prog='pa_get_data',
-    usage='%(prog)s [-m <month>] [-d <days>]',
+    prog='sheet_size_reduce.py',
+    usage='%(prog)s [-m <month>] [-d <days>] [-s <sheet>] [-a] [-w]',
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
             description='''    -m, --month  The number of the month to clean.
-            -d, --days   The number of days to keep. ''')
+            -d, --days   The number of days to keep.
+            -s, --sheet  The name of the sheet to clean.
+            -a, --all    Clean all sheets.
+            -w, --warnings  Show warnings.        ''')
     g.add_argument('-m', '--month',
                     type=int,
                     default=0,
@@ -67,15 +81,20 @@ def get_arguments():
     g.add_argument('-a', '--all', action='store_true',
                     dest='all',
                     help=argparse.SUPPRESS)
+    g.add_argument('-w', '--warnings', action='store_true',
+                    dest='warnings',
+                    help=argparse.SUPPRESS)
     args = parser.parse_args()
     return(args)
 args = get_arguments()
+print(args.warnings)
 
-sheet_list =()
+sheets = ()
 if args.all is True:
-    sheet_list = ('TV', 'RS', 'OC', 'CEP')
+    for k, v in config.BBOX_DICT.items():
+        sheets += (k,)
 else:
-    sheet_list = (args.sheet_name)
+    sheets = (args.sheet_name,)
 
 # Define the current month and year
 now = datetime.now()
@@ -87,17 +106,29 @@ else:
     year_to_clean = now.year
 
 
-for sheet_name in sheet_list:
+for index, sheet_name in enumerate(sheets):
     # Set up the worksheet
-    try:
-        sheet = client.open(config.DOCUMENT_NAME).worksheet(sheet_name)
-    except gspread.exceptions.WorksheetNotFound as e:
-        print(' ')
-        message = f'The Google Sheet "{sheet_name}" could not be found, exiting...'
-        print(message)
-        exit()
-    # Get all the rows in the worksheet
     MAX_ATTEMPTS: int = 3
+    attempts: int = 0
+    while attempts < MAX_ATTEMPTS:
+        try:
+            sheet = client.open(config.DOCUMENT_NAME).worksheet(sheet_name)
+            break
+        except gspread.exceptions.WorksheetNotFound as e:
+            print(' ')
+            message = f'The Google Sheet "{sheet_name}" could not be found, exiting...'
+            print(message)
+            exit()
+        except gspread.exceptions.APIError as e:
+            attempts += 1
+            if attempts < MAX_ATTEMPTS:
+                sleep(60)
+            else:
+                print(e)
+                print(' ')
+                print('Maximum gspread read attempts exceeded, exiting...')
+                exit()
+    # Get all the rows in the worksheet
     attempts: int = 0
     while attempts < MAX_ATTEMPTS:
         try:
@@ -129,24 +160,27 @@ for sheet_name in sheet_list:
             break
     num_rows = len(rows_to_delete)
     if num_rows == 0:
-        print('No rows to delete, exiting...')
-        exit()
+        message = f'No rows to delete from "{sheet_name}".'
+        print(message)
+        continue
     first_date = datetime.strptime(rows[rows_to_delete[0]-2]['time_stamp'], '%m/%d/%Y %H:%M:%S')
     last_date = datetime.strptime(rows[rows_to_delete[num_rows-1]-2]['time_stamp'], '%m/%d/%Y %H:%M:%S')
-    message = f'You are about to delete {num_rows} rows from {first_date.strftime("%m/%d/%Y %H:%M:%S")} to {last_date.strftime("%m/%d/%Y %H:%M:%S")} from sheet "{sheet_name}".' 
-    print(message)
-    print('Do you want to continue? (y/n)')
-    answer = input()
-    if answer == 'y':
-        if is_continuous(rows_to_delete) is True and len(rows_to_delete) > 0:
-            if len(rows_to_delete) == 1:
-                sheet.delete_row(rows_to_delete[0])
-            elif len(rows_to_delete) > 1:
-                sheet.delete_rows(min(rows_to_delete), max(rows_to_delete))
-            message = f'{str(num_rows)} rows from {first_date.strftime("%m/%d/%Y %H:%M:%S")} to {last_date.strftime("%m/%d/%Y %H:%M:%S")} have been deleted from "{sheet_name}".'
-            print(message)
+    if args.warnings is False:
+        message = f'You are about to delete {num_rows} rows from {first_date.strftime("%m/%d/%Y %H:%M:%S")} to {last_date.strftime("%m/%d/%Y %H:%M:%S")} from sheet "{sheet_name}".' 
+        print(message)
+        print('Do you want to continue? (y/n)')
+        answer = input()
+        if answer != 'y':
+            if index != len(sheets) - 1:
+                message = f'No rows deleted from "{sheet_name}", continuing...'
+                print(message)
+                continue
+            else:
+                message = f'No rows deleted from "{sheet_name}", no additional sheets to process, exiting...'
+                print(message)
+                exit()
         else:
-            print('Rows to delete are not continuous, no data deleted.')
+            delete_rows(sheet, sheet_name, rows_to_delete, num_rows, first_date, last_date)
     else:
-        print('No rows deleted, exiting...')
-        exit()
+        delete_rows(sheet, sheet_name, rows_to_delete, num_rows, first_date, last_date)
+        sleep(30)
