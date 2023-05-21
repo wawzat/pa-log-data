@@ -385,24 +385,36 @@ def regional_stats(client, DOCUMENT_NAME):
     write_mode: str = 'update'
     out_worksheet_regional_name: str = 'Regional'
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
+    MAX_ATTEMPTS: int = 3
+    attempts: int = 0
     for k, v in config.BBOX_DICT.items():
         worksheet_name = v[1] + ' Proc'
-        # open the Google Sheets input worksheet
-        in_sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
-        data = in_sheet.get_all_records()
-        if len(data) > 0:
-            data_list.append(data) 
-            df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
-            df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
-            df_combined = df_combined.dropna(subset=['Ipm25'])
-            df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
-            mean_value = df_combined['Ipm25'].mean().round(2)
-            max_value = df_combined['Ipm25'].max().round(2)
-            df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
-            df_combined = pd.DataFrame()
-            data_list = []
-            write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
-            sleep(90)
+        while attempts < MAX_ATTEMPTS:
+            try:
+                # open the Google Sheets input worksheet
+                in_sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
+                data = in_sheet.get_all_records()
+            except gspread.exceptions.APIError as e:
+                attempts += 1
+                message = f'regional_stats() gspread error attempt #{attempts}'
+                logging.exception(message)
+                if attempts < MAX_ATTEMPTS:
+                    sleep(90)
+                else:
+                    logging.exception('regional_stats() gspread error max attempts reached')
+            if len(data) > 0:
+                data_list.append(data) 
+                df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
+                df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
+                df_combined = df_combined.dropna(subset=['Ipm25'])
+                df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
+                mean_value = df_combined['Ipm25'].mean().round(2)
+                max_value = df_combined['Ipm25'].max().round(2)
+                df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
+                df_combined = pd.DataFrame()
+                data_list = []
+                write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
+                sleep(90)
 
 
 def main():
