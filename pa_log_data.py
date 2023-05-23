@@ -402,6 +402,14 @@ def regional_stats(client, DOCUMENT_NAME):
                     sleep(90)
                 else:
                     logging.exception('regional_stats() gspread error max attempts reached')
+            except requests.exceptions.ConnectionError as e:
+                attempts += 1
+                message = f'regional_stats() requests error attempt #{attempts}'
+                logging.exception(message)
+                if attempts < MAX_ATTEMPTS:
+                    sleep(90)
+                else:
+                    logging.exception('regional_stats() requests error max attempts reached')
             if len(data) > 0:
                 data_list.append(data) 
                 df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
