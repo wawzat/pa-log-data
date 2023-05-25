@@ -62,7 +62,7 @@ def get_arguments():
             -d, --days   The number of days to keep.
             -s, --sheet  The name of the sheet to clean.
             -a, --all    Clean all sheets.
-            -w, --warnings  Show warnings.        ''')
+            -w, --warnings  Don't show warnings.        ''')
     g.add_argument('-m', '--month',
                     type=int,
                     default=0,
@@ -87,7 +87,6 @@ def get_arguments():
     args = parser.parse_args()
     return(args)
 args = get_arguments()
-print(args.warnings)
 
 sheets = ()
 if args.all is True:
@@ -126,7 +125,7 @@ for index, sheet_name in enumerate(sheets):
             else:
                 print(e)
                 print(' ')
-                print('Maximum gspread read attempts exceeded, exiting...')
+                print('Maximum gspread read attempts exceeded for sheet "{sheet_name}", exiting...')
                 exit()
     # Get all the rows in the worksheet
     attempts: int = 0
