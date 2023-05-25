@@ -52,4 +52,14 @@
 - Edit the code to change defaults in the argparse section.
 - For performance reasons I typically only keep three to four weeks of data in my raw logged data sheets.
 - This program automates deleting old data.
-- I manually copy sheets to an archive folder each month.
+- I manually copy sheets to an archive folder each month.  
+  
+  
+# pa_get_history.py
+  
+## Python program to get PurpleAir historical sensor data and save to Google Sheets.
+  
+### Notes:
+  
+- PurpleAir API historical end points require special API read-key permissions to be enabled by PurpleAir.
+- Default Sensor names are stored in the sensors_current dictionary in cofig.py
