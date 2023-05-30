@@ -411,19 +411,19 @@ def regional_stats(client, DOCUMENT_NAME):
                     sleep(90)
                 else:
                     logging.exception('regional_stats() requests error max attempts reached')
-            if len(data) > 0:
-                data_list.append(data) 
-                df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
-                df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
-                df_combined = df_combined.dropna(subset=['Ipm25'])
-                df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
-                mean_value = df_combined['Ipm25'].mean().round(2)
-                max_value = df_combined['Ipm25'].max().round(2)
-                df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
-                df_combined = pd.DataFrame()
-                data_list = []
-                write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
-                sleep(90)
+        if len(data) > 0:
+            data_list.append(data) 
+            df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
+            df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
+            df_combined = df_combined.dropna(subset=['Ipm25'])
+            df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
+            mean_value = df_combined['Ipm25'].mean().round(2)
+            max_value = df_combined['Ipm25'].max().round(2)
+            df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
+            df_combined = pd.DataFrame()
+            data_list = []
+            sleep(90)
+        write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
 
 
 def main():
