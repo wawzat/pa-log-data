@@ -61,5 +61,4 @@
   
 ### Notes:
   
-- PurpleAir API historical end points require special API read-key permissions to be enabled by PurpleAir.
 - Default Sensor names are stored in the sensors_current dictionary in cofig.py
