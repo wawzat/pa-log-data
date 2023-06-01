@@ -3,6 +3,8 @@ PURPLEAIR_READ_KEY = ''
 PURPLEAIR_WRITE_KEY = ''
 
 GSPREAD_SERVICE_ACCOUNT_JSON_PATH = r'C:\Users\username\AppData\Roaming\gspread\service_account.json'
+SERVICE_ACCOUNT_USER_EMAIL = 'username@project_name.iam.gserviceaccount.com'
+
 
 #user_directory = r' '
 MATRIX5 = r'c:\Users\username\OneDrive\Documents\House\PurpleAir'
@@ -25,7 +27,22 @@ WRITE_CSV: bool = False
 
 # set the name of the Google Sheets document
 DOCUMENT_NAME: str = 'pa_data'
+HISTORICAL_DOCUMENT_NAME: str = 'pa_history'
 # set the names of the worksheets in the Google Sheets document
 LOCAL_WORKSHEET_NAME: str = 'DT'
 REGIONAL_KEYS = ('QC', 'YB', 'CP')
 OUT_WORKSHEET_HEALTH_NAME: str = 'Health'
+
+google_account = 'username@gmail.com'
+
+tv_sensors_all = {
+    'SQTQ_RTTP_2533': {'ID': 12561, 'Neighborhood': 'Delta Bastion'},
+    'EE Park': {'ID': 72725, 'Neighborhood': 'Goldilocks'},
+    'Rec Area': {'ID': 1243, 'Neighborhood': 'Rec Zone'},
+    'Tawankef': {'ID': 1154, 'Neighborhood': 'TCF'},
+}
+
+tv_sensors = {
+    'SQTQ_RTTP_2533': {'ID': 12561, 'Neighborhood': 'Delta Bastion'},
+    'Tawankef': {'ID': 1154, 'Neighborhood': 'TCF'},
+}
