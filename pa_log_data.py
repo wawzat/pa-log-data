@@ -458,9 +458,9 @@ def main():
                 status_start: datetime = datetime.now()
                 clear_console()
                 print(
-                     tabulate([['Local:', config.LOCAL_INTERVAL_DURATION - local_interval_et],
-                     ['Regional:', config.REGIONAL_INTERVAL_DURATION - regional_interval_et],
-                     ['Process:', config.PROCESS_INTERVAL_DURATION - process_interval_et]],
+                     tabulate([['Local:', int(config.LOCAL_INTERVAL_DURATION - local_interval_et)],
+                     ['Regional:', int(config.REGIONAL_INTERVAL_DURATION - regional_interval_et)],
+                     ['Process:', int(config.PROCESS_INTERVAL_DURATION - process_interval_et)]],
                      headers=['Interval', 'Seconds Remaining'],
                      tablefmt='orgtbl')
                      )
