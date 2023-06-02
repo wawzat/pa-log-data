@@ -1,4 +1,6 @@
 """
+Google Sheets Spreadsheets created by gspread are owned by the Service Account that created them.
+They cannot be deleted by the web inteface.
 This program lists all the Google Sheets files associated with a given service account and optionally deletes them. 
 It requires a JSON key file for the service account and the `gspread` and `oauth2client` libraries to be installed.
 
