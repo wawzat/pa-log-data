@@ -223,11 +223,11 @@ def write_data(df, client, DOCUMENT_NAME, k, yr, mnth, WRITE_CSV=False):
                 sleep(60)
             else:
                 logging.exception('gspread error in write_data() max attempts reached')
-        try:
-            sheet = spreadsheet.worksheet('Sheet1')
-            spreadsheet.del_worksheet(sheet)
-        except gspread.exceptions.WorksheetNotFound as e:
-            pass
+    try:
+        sheet = spreadsheet.worksheet('Sheet1')
+        spreadsheet.del_worksheet(sheet)
+    except gspread.exceptions.WorksheetNotFound as e:
+        pass
     # Write the data to Google Sheets 
     if WRITE_CSV is True:
         try:
