@@ -456,14 +456,19 @@ def main():
             status_interval_et: int = (datetime.now() - status_start).total_seconds()
             if status_interval_et >= config.STATUS_INTERVAL_DURATION:
                 status_start: datetime = datetime.now()
+                local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) / 60)
+                local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) % 60)
+                regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) / 60)
+                regional_seconds = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) % 60)
+                process_minutes = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) / 60)
+                process_seconds = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) % 60)
+                table_data = [
+                    ['Local:', f"{local_minutes:02d}:{local_seconds:02d}"],
+                    ['Regional:', f"{regional_minutes:02d}:{regional_seconds:02d}"],
+                    ['Process:', f"{process_minutes:02d}:{process_seconds:02d}"]
+                ]
                 clear_console()
-                print(
-                     tabulate([['Local:', int(config.LOCAL_INTERVAL_DURATION - local_interval_et)],
-                     ['Regional:', int(config.REGIONAL_INTERVAL_DURATION - regional_interval_et)],
-                     ['Process:', int(config.PROCESS_INTERVAL_DURATION - process_interval_et)]],
-                     headers=['Interval', 'Seconds Remaining'],
-                     tablefmt='orgtbl')
-                     )
+                print(tabulate(table_data, headers=['Interval', 'Minutes Remaining', 'Seconds Remaining'], tablefmt='orgtbl'))
             if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
                 df_local = get_data(local_interval_start, config.BBOX_DICT.get('TV')[0])
                 if len (df_local.index) > 0:
