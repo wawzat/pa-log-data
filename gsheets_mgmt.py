@@ -14,7 +14,7 @@ Example:
     python gsheets_mgmt.py -d
 
 This will list all the Google Sheets files associated (owned or shared) with the service account and optionally delete 
-all the files owned by the Service Account with 'history' in their name, except for those with '401K' or 'data' in their name.
+all the files owned by the Service Account with 'pa_history' in their name, except for those with '401K' or 'data' in their name.
 """
 # James S. Lucas 20230601
 import gspread
@@ -57,7 +57,7 @@ for spreadsheet in spreadsheets:
 print()
 print('History Files:')
 for spreadsheet in spreadsheets:
-    if 'history' in spreadsheet['name']:
+    if 'pa_history' in spreadsheet['name']:
         message = f"Spreadsheet ID: {spreadsheet['id']}, Name: {spreadsheet['name']}"
         print(message)
         if args.delete is True:
