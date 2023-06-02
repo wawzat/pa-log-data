@@ -474,6 +474,9 @@ def main():
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
+                    sleep(10)
+                    write_mode: str = 'update'
+                    write_data(df_local, client, config.DOCUMENT_NAME, config.CURRENT_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
                 local_interval_start: datetime = datetime.now()
             if regional_interval_et > config.REGIONAL_INTERVAL_DURATION:
                 for regional_key in config.REGIONAL_KEYS:
