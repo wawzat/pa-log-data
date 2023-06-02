@@ -14,6 +14,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 from datetime import datetime, timedelta
 from time import sleep
+from tabulate import tabulate
 import logging
 from typing import Dict, List
 import config
@@ -41,6 +42,13 @@ scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     ]
 creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
+
+
+def clear_console():
+    """
+    A function that clears the console.
+    """
+    print("\033c", end="")
 
 
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
@@ -435,6 +443,7 @@ def main():
             write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(k)[1], write_mode, config.WRITE_CSV)
         else:
             pass
+    status_start: datetime = datetime.now()
     local_interval_start: datetime = datetime.now()
     regional_interval_start: datetime = datetime.now()
     process_interval_start: datetime = datetime.now()
@@ -444,6 +453,17 @@ def main():
             local_interval_et: int = (datetime.now() - local_interval_start).total_seconds()
             regional_interval_et: int = (datetime.now() - regional_interval_start).total_seconds()
             process_interval_et: int = (datetime.now() - process_interval_start).total_seconds()
+            status_interval_et: int = (datetime.now() - status_start).total_seconds()
+            if status_interval_et >= config.STATUS_INTERVAL_DURATION:
+                status_start: datetime = datetime.now()
+                clear_console()
+                print(
+                     tabulate([['Local:', local_interval_et - config.LOCAL_INTERVAL_DURATION],
+                     ['Regional:', regional_interval_et - config.REGIONAL_INTERVAL_DURATION],
+                     ['Process:', process_interval_et - config.PROCESS_INTERVAL_DURATION]],
+                     headers=['Interval', 'Seconds Remaining'],
+                     tablefmt='orgtbl')
+                     )
             if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
                 df_local = get_data(local_interval_start, config.BBOX_DICT.get('TV')[0])
                 if len (df_local.index) > 0:
