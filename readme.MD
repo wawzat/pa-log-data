@@ -52,7 +52,6 @@
 - Edit the code to change defaults in the argparse section.
 - For performance reasons I typically only keep three to four weeks of data in my raw logged data sheets.
 - This program automates deleting old data.
-- I manually copy sheets to an archive folder each month.  
   
   
 # pa_get_history.py
@@ -61,4 +60,25 @@
   
 ### Notes:
   
-- Default Sensor names are stored in the sensors_current dictionary in cofig.py
+- Default Sensor names are stored in the sensors_current dictionary in cofig.py  
+  
+    
+# gsheets_to_xl.py  
+  
+## Python program to download Google Sheets data to Excel.  
+  
+### Notes:  
+  
+- Consolidates data from all sheets in a Google Sheets document into a single Excel workbook.  
+  
+
+# gsheets_mgmt.py  
+  
+## Python program to manage Google Sheets documents.  
+  
+### Notes:  
+  
+- Google Sheets spreadsheets created by gsheets are owned by the Google Service Account.
+- As such they are not manageable from the Google Sheets Web UI.
+- This program lists all Google Sheets documents owned by or shared with the Google Service Account and optionally deletes them.
+- I typically "Make a copy" from the Google Sheets Web UI and share it with the Google Sheets Account before deleting the original from the Google Service Account.
