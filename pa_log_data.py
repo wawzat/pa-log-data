@@ -252,7 +252,6 @@ def current_process(df):
             '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
     cols_8: List[str] = ['Ipm25']
     cols: List[str] = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
-    df = pd.DataFrame(in_sheet.get_all_records())
     df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
     df['Ipm25'] = df.apply(
         lambda x: calc_aqi(x['pm2.5_atm_avg']),
