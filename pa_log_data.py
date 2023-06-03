@@ -44,8 +44,7 @@ creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_
 client = gspread.authorize(creds)
 
 
-def status_update(status_start, local_et, regional_et, process_et):
-    status_start: datetime = datetime.now()
+def status_update(local_et, regional_et, process_et):
     local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_et) / 60)
     local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_et) % 60)
     regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_et) / 60)
@@ -510,7 +509,7 @@ def main():
             sleep(.1)
             local_et, regional_et, process_et, status_et = elapsed_time(local_start, regional_start, process_start, status_start)
             if status_et >= config.STATUS_INTERVAL_DURATION:
-                status_start = status_update(status_start, local_et, regional_et, process_et)
+                status_start = status_update(local_et, regional_et, process_et)
             if local_et >= config.LOCAL_INTERVAL_DURATION:
                 df_local = get_data(local_start, config.BBOX_DICT.get('TV')[0])
                 if len (df_local.index) > 0:
