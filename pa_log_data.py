@@ -262,6 +262,8 @@ def current_process(df):
         format='%m/%d/%Y %H:%M:%S'
     )
     df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
+    df['time_stamp'] = df['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
+    df['time_stamp_pacific'] = df['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df= df.drop(columns=['pm2.5_atm_avg'])
     df[cols_4] = df[cols_4].round(2)
     df[cols_5] = df[cols_5].astype(int)
