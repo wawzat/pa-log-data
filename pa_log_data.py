@@ -240,6 +240,35 @@ def calc_epa(PM2_5, RH):
         logging.exception('calc_epa() error')
 
 
+def current_process(df):
+    cols_1: List[str] = ['time_stamp', 'time_stamp_pacific']
+    cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
+    cols_3: List[str] = ['altitude']
+    cols_4: List[str] = ['rssi']
+    cols_5: List[str] = ['uptime']
+    cols_6: List[str] = ['humidity', 'temperature', 'pressure', 'voc']
+    cols_7: List[str] = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
+            'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
+            '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
+    cols_8: List[str] = ['Ipm25']
+    cols: List[str] = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
+    df = pd.DataFrame(in_sheet.get_all_records())
+    df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
+    df['Ipm25'] = df.apply(
+        lambda x: calc_aqi(x['pm2.5_atm_avg']),
+        axis=1
+        )
+    df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
+    df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+    df[cols_4] = df[cols_4].round(2)
+    df[cols_5] = df[cols_5].astype(int)
+    df[cols_6] = df[cols_6].round(2)
+    df[cols_7] = df[cols_7].round(2)
+    df[cols_8] = df[cols_8].astype(int)
+    df= df[cols]
+    return df
+
+
 def process_data(DOCUMENT_NAME, client):
     """
     Process data from Google Sheets sheets for each region. Data is cleaned, summarized and various values are calculated. Data are saved to
@@ -327,7 +356,7 @@ def process_data(DOCUMENT_NAME, client):
                 ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
             ].index
         )
-        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg']) 
+        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
         df_summarized[cols_4] = df_summarized[cols_4].round(2)
         df_summarized[cols_5] = df_summarized[cols_5].astype(int)
         df_summarized[cols_6] = df_summarized[cols_6].round(2)
@@ -475,8 +504,9 @@ def main():
                     write_mode: str = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
                     sleep(10)
+                    df_current = current_process(df_local)
                     write_mode: str = 'update'
-                    write_data(df_local, client, config.DOCUMENT_NAME, config.CURRENT_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
+                    write_data(df_current, client, config.DOCUMENT_NAME, config.CURRENT_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
                 local_interval_start: datetime = datetime.now()
             if regional_interval_et > config.REGIONAL_INTERVAL_DURATION:
                 for regional_key in config.REGIONAL_KEYS:
