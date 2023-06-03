@@ -44,11 +44,22 @@ creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_
 client = gspread.authorize(creds)
 
 
-def clear_console():
-    """
-    A function that clears the console.
-    """
+def status_update(status_start, local_interval_et, regional_interval_et, process_interval_et):
+    status_start: datetime = datetime.now()
+    local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) / 60)
+    local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) % 60)
+    regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) / 60)
+    regional_seconds = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) % 60)
+    process_minutes = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) / 60)
+    process_seconds = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) % 60)
+    table_data = [
+        ['Local:', f"{local_minutes:02d}:{local_seconds:02d}"],
+        ['Regional:', f"{regional_minutes:02d}:{regional_seconds:02d}"],
+        ['Process:', f"{process_minutes:02d}:{process_seconds:02d}"]
+    ]
+    print(tabulate(table_data, headers=['Interval', 'Time Remaining (MM:SS)'], tablefmt='orgtbl'))
     print("\033c", end="")
+    return datetime.now()
 
 
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
@@ -483,26 +494,13 @@ def main():
     process_interval_start: datetime = datetime.now()
     while True:
         try:
-            sleep(1)
+            sleep(.1)
             local_interval_et: int = (datetime.now() - local_interval_start).total_seconds()
             regional_interval_et: int = (datetime.now() - regional_interval_start).total_seconds()
             process_interval_et: int = (datetime.now() - process_interval_start).total_seconds()
             status_interval_et: int = (datetime.now() - status_start).total_seconds()
             if status_interval_et >= config.STATUS_INTERVAL_DURATION:
-                status_start: datetime = datetime.now()
-                local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) / 60)
-                local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) % 60)
-                regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) / 60)
-                regional_seconds = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) % 60)
-                process_minutes = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) / 60)
-                process_seconds = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) % 60)
-                table_data = [
-                    ['Local:', f"{local_minutes:02d}:{local_seconds:02d}"],
-                    ['Regional:', f"{regional_minutes:02d}:{regional_seconds:02d}"],
-                    ['Process:', f"{process_minutes:02d}:{process_seconds:02d}"]
-                ]
-                clear_console()
-                print(tabulate(table_data, headers=['Interval', 'Time Remaining (MM:SS)'], tablefmt='orgtbl'))
+                status_start = status_update(status_start, local_interval_et, regional_interval_et, process_interval_et)
             if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
                 df_local = get_data(local_interval_start, config.BBOX_DICT.get('TV')[0])
                 if len (df_local.index) > 0:
