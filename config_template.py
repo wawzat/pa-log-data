@@ -18,7 +18,7 @@ BBOX_DICT = { 'DT': (('-118.5298', '35.7180', '-118.4166', '35.8188'), 'DT', 'De
 }
 
 # Durations in seconds
-STATUS_INTERVAL_DURATION: int = 5
+STATUS_INTERVAL_DURATION: int = 1
 LOCAL_INTERVAL_DURATION: int = 1200
 REGIONAL_INTERVAL_DURATION: int = 3800
 PROCESS_INTERVAL_DURATION: int = 5000
@@ -30,6 +30,7 @@ WRITE_CSV: bool = False
 DOCUMENT_NAME: str = 'pa_data'
 HISTORICAL_DOCUMENT_NAME: str = 'pa_history'
 # set the names of the worksheets in the Google Sheets document
+CURRENT_WORKSHEET_NAME: str = 'Current'
 LOCAL_WORKSHEET_NAME: str = 'DT'
 REGIONAL_KEYS = ('QC', 'YB', 'CP')
 OUT_WORKSHEET_HEALTH_NAME: str = 'Health'
