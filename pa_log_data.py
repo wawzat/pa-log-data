@@ -259,7 +259,7 @@ def current_process(df):
         axis=1
         )
     df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
-    df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+    df= df.drop(columns=['pm2.5_atm_avg'])
     df[cols_4] = df[cols_4].round(2)
     df[cols_5] = df[cols_5].astype(int)
     df[cols_6] = df[cols_6].round(2)
