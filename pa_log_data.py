@@ -275,6 +275,13 @@ def current_process(df):
     df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
     df['time_stamp'] = df['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df['time_stamp_pacific'] = df['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
+    #Clean data when PM ATM 2.5 channels differ by 5 or 70%
+    df= df.drop(df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) >= 5].index)
+    df= df.drop(
+        df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) /
+            ((df['pm2.5_atm_a'] + df['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
+        ].index
+    )
     df= df.drop(columns=['pm2.5_atm_avg'])
     df[cols_4] = df[cols_4].round(2)
     df[cols_5] = df[cols_5].astype(int)
