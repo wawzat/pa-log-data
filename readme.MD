@@ -80,5 +80,5 @@
   
 - Google Sheets spreadsheets created by gsheets are owned by the Google Service Account.
 - As such they are not manageable from the Google Sheets Web UI.
-- This program lists all Google Sheets documents owned by or shared with the Google Service Account and optionally deletes them.
+- This program lists all Google Sheets documents prefixed with "pa_history" that are owned by or shared with the Google Service Account and optionally deletes the documents owned by the Google Service Account.
 - I typically "Make a copy" from the Google Sheets Web UI and share it with the Google Sheets Account before deleting the original from the Google Service Account.
