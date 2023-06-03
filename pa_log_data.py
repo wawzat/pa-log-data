@@ -1,7 +1,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230507
+# James S. Lucas - 20230603
 
 import sys
 import requests
@@ -19,7 +19,7 @@ import logging
 from typing import Dict, List
 import config
 
-# Setup logging
+# Setup exception logging
 format_string = '%(name)s - %(asctime)s : %(message)s'
 logging.basicConfig(filename='error.log',
                     format = format_string)
@@ -44,14 +44,14 @@ creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_
 client = gspread.authorize(creds)
 
 
-def status_update(status_start, local_interval_et, regional_interval_et, process_interval_et):
+def status_update(status_start, local_et, regional_et, process_et):
     status_start: datetime = datetime.now()
-    local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) / 60)
-    local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_interval_et) % 60)
-    regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) / 60)
-    regional_seconds = int((config.REGIONAL_INTERVAL_DURATION - regional_interval_et) % 60)
-    process_minutes = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) / 60)
-    process_seconds = int((config.PROCESS_INTERVAL_DURATION - process_interval_et) % 60)
+    local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_et) / 60)
+    local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_et) % 60)
+    regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_et) / 60)
+    regional_seconds = int((config.REGIONAL_INTERVAL_DURATION - regional_et) % 60)
+    process_minutes = int((config.PROCESS_INTERVAL_DURATION - process_et) / 60)
+    process_seconds = int((config.PROCESS_INTERVAL_DURATION - process_et) % 60)
     table_data = [
         ['Local:', f"{local_minutes:02d}:{local_seconds:02d}"],
         ['Regional:', f"{regional_minutes:02d}:{regional_seconds:02d}"],
@@ -60,6 +60,14 @@ def status_update(status_start, local_interval_et, regional_interval_et, process
     print(tabulate(table_data, headers=['Interval', 'Time Remaining (MM:SS)'], tablefmt='orgtbl'))
     print("\033c", end="")
     return datetime.now()
+
+
+def elapsed_time(local_start, regional_start, process_start, status_start):
+    local_et: int = (datetime.now() - local_start).total_seconds()
+    regional_et: int = (datetime.now() - regional_start).total_seconds()
+    process_et: int = (datetime.now() - process_start).total_seconds()
+    status_et: int = (datetime.now() - status_start).total_seconds()
+    return local_et, regional_et, process_et, status_et
 
 
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
@@ -252,6 +260,7 @@ def calc_epa(PM2_5, RH):
 
 
 def current_process(df):
+    # define the columns to be included in the output in groups for later formatting
     cols_1: List[str] = ['time_stamp', 'time_stamp_pacific']
     cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
     cols_3: List[str] = ['altitude']
@@ -495,21 +504,15 @@ def main():
             write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(k)[1], write_mode, config.WRITE_CSV)
         else:
             pass
-    status_start: datetime = datetime.now()
-    local_interval_start: datetime = datetime.now()
-    regional_interval_start: datetime = datetime.now()
-    process_interval_start: datetime = datetime.now()
+    local_start, regional_start, process_start, status_start = datetime.now(), datetime.now(), datetime.now(), datetime.now()
     while True:
         try:
             sleep(.1)
-            local_interval_et: int = (datetime.now() - local_interval_start).total_seconds()
-            regional_interval_et: int = (datetime.now() - regional_interval_start).total_seconds()
-            process_interval_et: int = (datetime.now() - process_interval_start).total_seconds()
-            status_interval_et: int = (datetime.now() - status_start).total_seconds()
-            if status_interval_et >= config.STATUS_INTERVAL_DURATION:
-                status_start = status_update(status_start, local_interval_et, regional_interval_et, process_interval_et)
-            if local_interval_et >= config.LOCAL_INTERVAL_DURATION:
-                df_local = get_data(local_interval_start, config.BBOX_DICT.get('TV')[0])
+            local_et, regional_et, process_et, status_et = elapsed_time(local_start, regional_start, process_start, status_start)
+            if status_et >= config.STATUS_INTERVAL_DURATION:
+                status_start = status_update(status_start, local_et, regional_et, process_et)
+            if local_et >= config.LOCAL_INTERVAL_DURATION:
+                df_local = get_data(local_start, config.BBOX_DICT.get('TV')[0])
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
@@ -517,18 +520,18 @@ def main():
                     df_current = current_process(df_local)
                     write_mode: str = 'update'
                     write_data(df_current, client, config.DOCUMENT_NAME, config.CURRENT_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
-                local_interval_start: datetime = datetime.now()
-            if regional_interval_et > config.REGIONAL_INTERVAL_DURATION:
+                local_start: datetime = datetime.now()
+            if regional_et > config.REGIONAL_INTERVAL_DURATION:
                 for regional_key in config.REGIONAL_KEYS:
-                    df = get_data(regional_interval_start, config.BBOX_DICT.get(regional_key)[0]) 
+                    df = get_data(regional_start, config.BBOX_DICT.get(regional_key)[0]) 
                     if len(df.index) > 0:
                         write_mode: str = 'append'
                         write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(regional_key)[1], write_mode, config.WRITE_CSV)
                     sleep(10)
-                regional_interval_start: datetime = datetime.now()
-            if process_interval_et > config.PROCESS_INTERVAL_DURATION:
+                regional_start: datetime = datetime.now()
+            if process_et > config.PROCESS_INTERVAL_DURATION:
                 df = process_data(config.DOCUMENT_NAME, client)
-                process_interval_start: datetime = datetime.now()
+                process_start: datetime = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, config.DOCUMENT_NAME, config.OUT_WORKSHEET_HEALTH_NAME)
                     regional_stats(client, config.DOCUMENT_NAME)
