@@ -259,23 +259,32 @@ def calc_epa(PM2_5, RH):
 
 
 def current_process(df):
-    # define the columns to be included in the output in groups for later formatting
-    cols_1: List[str] = ['time_stamp', 'time_stamp_pacific']
-    cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
-    cols_3: List[str] = ['altitude']
-    cols_4: List[str] = ['rssi']
-    cols_5: List[str] = ['uptime']
-    cols_6: List[str] = ['humidity', 'temperature', 'pressure', 'voc']
-    cols_7: List[str] = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
-            'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
-            '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
-    cols_8: List[str] = ['Ipm25']
-    cols: List[str] = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
+    """
+    This function takes a pandas DataFrame as input and performs some processing on it.
+    
+    Args:
+        df (pandas.DataFrame): The DataFrame to be processed.
+        
+    Returns:
+        df (pandas.DataFrame): The processed DataFrame.
+    
+    Notes:
+        - This function modifies the input DataFrame in place.
+        - The following columns are added to the DataFrame:
+            - Ipm25 (AQI)
+            - pm25_epa
+            - time_stamp_pacific
+        - Data is cleaned according to EPA criteria.
+    """
     df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
     df['Ipm25'] = df.apply(
         lambda x: calc_aqi(x['pm2.5_atm_avg']),
         axis=1
         )
+    df['pm25_epa'] = df.apply(
+                lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
+                axis=1
+                    )
     df['time_stamp'] = pd.to_datetime(
         df['time_stamp'],
         format='%m/%d/%Y %H:%M:%S'
@@ -291,12 +300,12 @@ def current_process(df):
         ].index
     )
     df= df.drop(columns=['pm2.5_atm_avg'])
-    df[cols_4] = df[cols_4].round(2)
-    df[cols_5] = df[cols_5].astype(int)
-    df[cols_6] = df[cols_6].round(2)
-    df[cols_7] = df[cols_7].round(2)
-    df[cols_8] = df[cols_8].astype(int)
-    df= df[cols]
+    df[config.cols_4] = df[config.cols_4].round(2)
+    df[config.cols_5] = df[config.cols_5].astype(int)
+    df[config.cols_6] = df[config.cols_6].round(2)
+    df[config.cols_7] = df[config.cols_7].round(2)
+    df[config.cols_8] = df[config.cols_8].astype(int)
+    df = df[config.cols]
     return df
 
 
@@ -319,18 +328,6 @@ def process_data(DOCUMENT_NAME, client):
         '5.0_um_count', '10.0_um_count', 'pm25_epa', 'Ipm25'.
     """
     write_mode: str = 'update'
-    # define the columns to be included in the output in groups for later formatting
-    cols_1: List[str] = ['time_stamp', 'time_stamp_pacific']
-    cols_2: List[str] = ['sensor_index', 'name', 'latitude', 'longitude']
-    cols_3: List[str] = ['altitude']
-    cols_4: List[str] = ['rssi']
-    cols_5: List[str] = ['uptime']
-    cols_6: List[str] = ['humidity', 'temperature', 'pressure', 'voc']
-    cols_7: List[str] = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
-            'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
-            '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
-    cols_8: List[str] = ['pm25_epa', 'Ipm25']
-    cols: List[str] = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8
     for k, v in config.BBOX_DICT.items():
         # open the Google Sheets input worksheet and read in the data
         in_worksheet_name: str = k
@@ -388,12 +385,12 @@ def process_data(DOCUMENT_NAME, client):
             ].index
         )
         df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
-        df_summarized[cols_4] = df_summarized[cols_4].round(2)
-        df_summarized[cols_5] = df_summarized[cols_5].astype(int)
-        df_summarized[cols_6] = df_summarized[cols_6].round(2)
-        df_summarized[cols_7] = df_summarized[cols_7].round(2)
-        df_summarized[cols_8] = df_summarized[cols_8].astype(int)
-        df_summarized = df_summarized[cols]
+        df_summarized[config.cols_4] = df_summarized[config.cols_4].round(2)
+        df_summarized[config.cols_5] = df_summarized[config.cols_5].astype(int)
+        df_summarized[config.cols_6] = df_summarized[config.cols_6].round(2)
+        df_summarized[config.cols_7] = df_summarized[config.cols_7].round(2)
+        df_summarized[config.cols_8] = df_summarized[config.cols_8].astype(int)
+        df_summarized = df_summarized[config.cols]
         write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
     return df_tv
@@ -449,6 +446,19 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
 
 
 def regional_stats(client, DOCUMENT_NAME):
+    """
+    Retrieves air quality data from a Google Sheets document and calculates the mean and maximum values for each region.
+
+    Args:
+        client (object): A client object used to access a Google Sheets API.
+        DOCUMENT_NAME (str): The name of the Google Sheets document to retrieve data from.
+
+    Returns:
+        None
+
+    This function retrieves air quality data from a Google Sheets document for each region specified in the BBOX_DICT dictionary.
+    It calculates the mean and maximum values for each region and writes the output to a specified worksheet in the same Google Sheets document.
+    """
     data_list = []
     write_mode: str = 'update'
     out_worksheet_regional_name: str = 'Regional'
