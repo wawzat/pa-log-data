@@ -300,7 +300,7 @@ def current_process(df):
             ((df['pm2.5_atm_a'] + df['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
         ].index
     )
-    df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+    df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
     df[config.cols_4] = df[config.cols_4].round(2)
     df[config.cols_5] = df[config.cols_5].astype(int)
     df[config.cols_6] = df[config.cols_6].round(2)
