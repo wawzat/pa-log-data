@@ -16,7 +16,7 @@ The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20230601
+# James S. Lucas - 20230603
 
 import sys
 import requests
@@ -36,7 +36,7 @@ import logging
 from typing import Dict, List
 import config
 
-# Setup logging
+# Setup exception logging
 format_string = '%(name)s - %(asctime)s : %(message)s'
 logging.basicConfig(filename='pa_get_history_error.log',
                     format = format_string)
@@ -91,7 +91,6 @@ def get_arguments():
 
     args = parser.parse_args()
     return(args)
-args = get_arguments()
 
 
 def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
@@ -114,13 +113,10 @@ def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
         30: 7,
         60: 14
     }
-
     root_url: str = 'https://api.purpleair.com/v1/sensors/{ID}/history?start_timestamp={start_timestamp}&end_timestamp={end_timestamp}&average={average}&fields={fields}'
-
     df_list = []  # List to store dataframes
     latest_end_timestamp = 0  # Track the latest end timestamp
     num_iterations = math.ceil(last_day_of_month / average_limits.get(average))
-
     for loop_num in range(1, num_iterations + 1):
         start_day = int((last_day_of_month / num_iterations) * (loop_num - 1) + 1)
         end_day = int((last_day_of_month / num_iterations) * loop_num)
@@ -237,6 +233,7 @@ def write_data(df, client, DOCUMENT_NAME, k, yr, mnth, WRITE_CSV=False):
 
 
 def main():
+    args = get_arguments()
     yr = args.yr
     mnth = args.mnth
     start_time = datetime.now()
