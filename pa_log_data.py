@@ -315,7 +315,7 @@ def current_process(df):
     df['time_stamp'] = df['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df['time_stamp_pacific'] = df['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df = clean_data(df)
-    df = format_data(df)
+    df = format_df(df)
     return df
 
 
@@ -388,9 +388,8 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
-        #Clean data when PM ATM 2.5 channels differ by 5 or 70%
         df = clean_data(df)
-        df = format_data(df)
+        df = format_df(df)
         write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
     return df_tv
