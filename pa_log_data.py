@@ -371,7 +371,7 @@ def process_data(DOCUMENT_NAME, client):
                     lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
-        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+        df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
@@ -419,14 +419,7 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     write_mode: str = 'update'
     df['pm2.5_atm_dif'] = abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b'])
     df_good = clean_data(df)
-    #df_bad = df[(
-        #df['pm2.5_atm_a']-df['pm2.5_atm_b']
-        #).abs() >= 5.0]
-    #df_bad = df_bad[((
-        #(df_bad['pm2.5_atm_a'] - df_bad['pm2.5_atm_b']).abs()
-        #) / ((df_bad['pm2.5_atm_a'] + df_bad['pm2.5_atm_b']) / 2)) >= 0.7]
     df_grouped = df.groupby('name')
-    #df_bad_grouped = df_bad.groupby('name')
     df_good_grouped = df_good.groupby('name')
     for k, v in df_grouped:
         try:
