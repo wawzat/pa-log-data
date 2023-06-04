@@ -69,6 +69,26 @@ def elapsed_time(local_start, regional_start, process_start, status_start):
     return local_et, regional_et, process_et, status_et
 
 
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    #Clean data when PM ATM 2.5 channels differ by 5 or 70%
+    df = df.drop(df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) >= 5].index)
+    df = df.drop(
+        df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) /
+            ((df['pm2.5_atm_a'] + df['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
+        ].index
+    )
+    return df
+
+
+def format_df(df: pd.DataFrame) -> pd.DataFrame:
+    df[config.cols_4] = df[config.cols_4].round(2)
+    df[config.cols_5] = df[config.cols_5].astype(int)
+    df[config.cols_6] = df[config.cols_6].round(2)
+    df[config.cols_7] = df[config.cols_7].round(2)
+    df[config.cols_8] = df[config.cols_8].astype(int)
+    df = df[config.cols]
+    return df
+
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     """
     A function that queries the PurpleAir API for sensor data within a given bounding box and time frame.
@@ -286,6 +306,7 @@ def current_process(df):
                 lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                 axis=1
                     )
+    df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
     df['time_stamp'] = pd.to_datetime(
         df['time_stamp'],
         format='%m/%d/%Y %H:%M:%S'
@@ -293,20 +314,8 @@ def current_process(df):
     df['time_stamp_pacific'] = df['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
     df['time_stamp'] = df['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df['time_stamp_pacific'] = df['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
-    #Clean data when PM ATM 2.5 channels differ by 5 or 70%
-    df= df.drop(df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) >= 5].index)
-    df= df.drop(
-        df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) /
-            ((df['pm2.5_atm_a'] + df['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
-        ].index
-    )
-    df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
-    df[config.cols_4] = df[config.cols_4].round(2)
-    df[config.cols_5] = df[config.cols_5].astype(int)
-    df[config.cols_6] = df[config.cols_6].round(2)
-    df[config.cols_7] = df[config.cols_7].round(2)
-    df[config.cols_8] = df[config.cols_8].astype(int)
-    df = df[config.cols]
+    df = clean_data(df)
+    df = format_data(df)
     return df
 
 
@@ -362,6 +371,7 @@ def process_data(DOCUMENT_NAME, client):
                     lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
+        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
@@ -379,19 +389,8 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
         #Clean data when PM ATM 2.5 channels differ by 5 or 70%
-        df_summarized = df_summarized.drop(df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) >= 5].index)
-        df_summarized = df_summarized.drop(
-            df_summarized[abs(df_summarized['pm2.5_atm_a'] - df_summarized['pm2.5_atm_b']) /
-                ((df_summarized['pm2.5_atm_a'] + df_summarized['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
-            ].index
-        )
-        df_summarized = df_summarized.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
-        df_summarized[config.cols_4] = df_summarized[config.cols_4].round(2)
-        df_summarized[config.cols_5] = df_summarized[config.cols_5].astype(int)
-        df_summarized[config.cols_6] = df_summarized[config.cols_6].round(2)
-        df_summarized[config.cols_7] = df_summarized[config.cols_7].round(2)
-        df_summarized[config.cols_8] = df_summarized[config.cols_8].astype(int)
-        df_summarized = df_summarized[config.cols]
+        df = clean_data(df)
+        df = format_data(df)
         write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
     return df_tv
@@ -420,17 +419,19 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     sensor_health_list = []
     write_mode: str = 'update'
     df['pm2.5_atm_dif'] = abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b'])
-    df_bad = df[(
-        df['pm2.5_atm_a']-df['pm2.5_atm_b']
-        ).abs() >= 5.0]
-    df_bad = df_bad[((
-        (df_bad['pm2.5_atm_a'] - df_bad['pm2.5_atm_b']).abs()
-        ) / ((df_bad['pm2.5_atm_a'] + df_bad['pm2.5_atm_b']) / 2)) >= 0.7]
+    df_good = clean_data(df)
+    #df_bad = df[(
+        #df['pm2.5_atm_a']-df['pm2.5_atm_b']
+        #).abs() >= 5.0]
+    #df_bad = df_bad[((
+        #(df_bad['pm2.5_atm_a'] - df_bad['pm2.5_atm_b']).abs()
+        #) / ((df_bad['pm2.5_atm_a'] + df_bad['pm2.5_atm_b']) / 2)) >= 0.7]
     df_grouped = df.groupby('name')
-    df_bad_grouped = df_bad.groupby('name')
+    #df_bad_grouped = df_bad.groupby('name')
+    df_good_grouped = df_good.groupby('name')
     for k, v in df_grouped:
         try:
-            pct_good = (df_grouped.get_group(k).shape[0] - df_bad_grouped.get_group(k).shape[0]) / df_grouped.get_group(k).shape[0]
+            pct_good = 1 - (df_grouped.get_group(k).shape[0] - df_good_grouped.get_group(k).shape[0]) / df_grouped.get_group(k).shape[0]
         except KeyError as e:
             pct_good = 1.00
         max_delta = df_grouped.get_group(k)['pm2.5_atm_dif'].max()
