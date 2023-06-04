@@ -60,7 +60,6 @@ def get_arguments():
 
     args = parser.parse_args()
     return(args)
-args = get_arguments()
 
 
 # set the credentials for the Google Sheets service account
@@ -136,7 +135,7 @@ def sheet_to_xl(spreadsheet, all_data):
     print(f'File {file_name} created.')
 
 
-def check_sheet_name(spreadsheets, sheet_name):
+def check_sheet_exists(spreadsheets, sheet_name):
     sheet_found = False
     for spreadsheet in spreadsheets:
         if sheet_name in spreadsheet.values():
@@ -145,13 +144,14 @@ def check_sheet_name(spreadsheets, sheet_name):
 
 
 def main():
+    args = get_arguments()
     spreadsheets = client.list_spreadsheet_files()
     if args.list_sheets is True:
         if args.mnth == 0 and args.yr == 0:
             list_sheets(spreadsheets)
         elif args.mnth != 0 and args.yr != 0:
             sheet_name = f'pa_history_{args.yr}_{str(args.mnth)}'
-            sheet_found = check_sheet_name(spreadsheets, sheet_name)
+            sheet_found = check_sheet_exists(spreadsheets, sheet_name)
             if sheet_found is True:
                 print(f'Sheet name: {sheet_name}')
             else:
@@ -165,7 +165,7 @@ def main():
                     sleep(60)
         elif args.mnth != 0 and args.yr != 0:
             sheet_name = f'pa_history_{args.yr}_{str(args.mnth)}'
-            sheet_found = check_sheet_name(spreadsheets, sheet_name)
+            sheet_found = check_sheet_exists(spreadsheets, sheet_name)
             if sheet_found is True:
                 spreadsheet = {'name': sheet_name}
                 consolidate_sheets(args, spreadsheet)
