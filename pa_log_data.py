@@ -367,8 +367,8 @@ def process_data(DOCUMENT_NAME, client):
             format='%m/%d/%Y %H:%M:%S'
         )
         df = df.set_index('time_stamp')
-        df[cols_6] = df[cols_6].replace('', 0)
-        df[cols_6] = df[cols_6].astype(float)
+        df[config.cols_6] = df[config.cols_6].replace('', 0)
+        df[config.cols_6] = df[config.cols_6].astype(float)
         df_summarized = df.groupby('name').resample(config.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp_pacific'] = df_summarized['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
