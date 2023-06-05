@@ -21,13 +21,14 @@ Dependencies:
 import logging
 
 class AQI:
-    def __init__(self, PM2_5):
-        self.PM2_5 = int(PM2_5 * 10) / 10.0
-        if self.PM2_5 < 0:
-            self.PM2_5 = 0
+    @staticmethod
+    def calculate(PM2_5):
+        PM2_5 = int(PM2_5 * 10) / 10.0
+        if PM2_5 < 0:
+            PM2_5 = 0
         #AQI breakpoints (0,    1,     2,    3    )
         #                (Ilow, Ihigh, Clow, Chigh)
-        self.pm25_aqi = {
+        pm25_aqi = {
             'good': (0, 50, 0, 12),
             'moderate': (51, 100, 12.1, 35.4),
             'sensitive': (101, 150, 35.5, 55.4),
@@ -36,27 +37,25 @@ class AQI:
             'hazardous': (301, 500, 250.5, 500.4),
             'beyond_aqi': (301, 500, 250.5, 500.4)
             }
-
-    def calculate(self):
         try:
-            if (0.0 <= self.PM2_5 <= 12.0):
+            if (0.0 <= PM2_5 <= 12.0):
                 aqi_cat = 'good'
-            elif (12.1 <= self.PM2_5 <= 35.4):
+            elif (12.1 <= PM2_5 <= 35.4):
                 aqi_cat = 'moderate'
-            elif (35.5 <= self.PM2_5 <= 55.4):
+            elif (35.5 <= PM2_5 <= 55.4):
                 aqi_cat = 'sensitive'
-            elif (55.5 <= self.PM2_5 <= 150.4):
+            elif (55.5 <= PM2_5 <= 150.4):
                 aqi_cat = 'unhealthy'
-            elif (150.5 <= self.PM2_5 <= 250.4):
+            elif (150.5 <= PM2_5 <= 250.4):
                 aqi_cat = 'very'
-            elif (250.5 <= self.PM2_5 <= 500.4):
+            elif (250.5 <= PM2_5 <= 500.4):
                 aqi_cat = 'hazardous'
-            elif (self.PM2_5 >= 500.5):
+            elif (PM2_5 >= 500.5):
                 aqi_cat = 'beyond_aqi'
-            Ihigh = self.pm25_aqi.get(aqi_cat)[1]
-            Ilow = self.pm25_aqi.get(aqi_cat)[0]
-            Chigh = self.pm25_aqi.get(aqi_cat)[3]
-            Clow = self.pm25_aqi.get(aqi_cat)[2]
+            Ihigh = pm25_aqi.get(aqi_cat)[1]
+            Ilow = pm25_aqi.get(aqi_cat)[0]
+            Chigh = pm25_aqi.get(aqi_cat)[3]
+            Clow = pm25_aqi.get(aqi_cat)[2]
             Ipm25 = int(round(
                 ((Ihigh - Ilow) / (Chigh - Clow) * (self.PM2_5 - Clow) + Ilow)
                 ))
@@ -65,19 +64,16 @@ class AQI:
             logging.exception('calc_aqi() error')
 
 class EPA:
-    def __init__(self, PM2_5, RH):
-        self.PM2_5 = PM2_5
-        self.RH = RH
-
-    def calculate(self):
+    @staticmethod
+    def calculate(PM2_5, RH):
         try: 
             # If either PM2_5 or RH is a string, the EPA conversion value will be set to 0.
-            if any(isinstance(x, str) for x in (self.PM2_5, self.RH)):
+            if any(isinstance(x, str) for x in (PM2_5, RH)):
                 PM2_5_epa = 0
-            elif self.PM2_5 <= 343:
-                PM2_5_epa = 0.52 * self.PM2_5 - 0.086 * self.RH + 5.75
-            elif self.PM2_5 > 343:
-                PM2_5_epa = 0.46 * self.PM2_5 + 3.93 * 10 ** -4 * self.PM2_5 ** 2 + 2.97
+            elif PM2_5 <= 343:
+                PM2_5_epa = 0.52 * PM2_5 - 0.086 * RH + 5.75
+            elif PM2_5 > 343:
+                PM2_5_epa = 0.46 * PM2_5 + 3.93 * 10 ** -4 * PM2_5 ** 2 + 2.97
             else:
                 PM2_5_epa = 0
             return PM2_5_epa
