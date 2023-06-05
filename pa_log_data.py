@@ -1,7 +1,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230603
+# James S. Lucas - 20230605
 
 import sys
 import requests
@@ -16,7 +16,8 @@ from datetime import datetime, timedelta
 from time import sleep
 from tabulate import tabulate
 import logging
-from typing import Dict, List
+from typing import List
+from conversions import AQI, EPA
 import config
 
 # Setup exception logging
@@ -80,7 +81,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def format_df(df: pd.DataFrame) -> pd.DataFrame:
+def format_data(df: pd.DataFrame) -> pd.DataFrame:
     df[config.cols_4] = df[config.cols_4].round(2)
     df[config.cols_5] = df[config.cols_5].astype(int)
     df[config.cols_6] = df[config.cols_6].round(2)
@@ -88,6 +89,7 @@ def format_df(df: pd.DataFrame) -> pd.DataFrame:
     df[config.cols_8] = df[config.cols_8].astype(int)
     df = df[config.cols]
     return df
+
 
 def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     """
@@ -185,99 +187,6 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
             logging.exception('write_data() error writing csv')
 
 
-def calc_aqi(PM2_5):
-    """
-    Calculate the Air Quality Index (AQI) based on the input value of PM2.5.
-
-    Parameters:
-    ----------
-    PM2_5 : int
-        The PM2.5 concentration in μg/m³.
-
-    Returns:
-    -------
-    int
-        The corresponding AQI value for the given PM2.5 concentration.
-    """
-    PM2_5: int = int(PM2_5 * 10) / 10.0
-    if PM2_5 < 0:
-        PM2_5 = 0
-    #AQI breakpoints (0,    1,     2,    3    )
-    #                (Ilow, Ihigh, Clow, Chigh)
-    pm25_aqi = {
-        'good': (0, 50, 0, 12),
-        'moderate': (51, 100, 12.1, 35.4),
-        'sensitive': (101, 150, 35.5, 55.4),
-        'unhealthy': (151, 200, 55.5, 150.4),
-        'very': (201, 300, 150.5, 250.4),
-        'hazardous': (301, 500, 250.5, 500.4),
-        'beyond_aqi': (301, 500, 250.5, 500.4)
-        }
-    try:
-        if (0.0 <= PM2_5 <= 12.0):
-            aqi_cat = 'good'
-        elif (12.1 <= PM2_5 <= 35.4):
-            aqi_cat = 'moderate'
-        elif (35.5 <= PM2_5 <= 55.4):
-            aqi_cat = 'sensitive'
-        elif (55.5 <= PM2_5 <= 150.4):
-            aqi_cat = 'unhealthy'
-        elif (150.5 <= PM2_5 <= 250.4):
-            aqi_cat = 'very'
-        elif (250.5 <= PM2_5 <= 500.4):
-            aqi_cat = 'hazardous'
-        elif (PM2_5 >= 500.5):
-            aqi_cat = 'beyond_aqi'
-        Ihigh = pm25_aqi.get(aqi_cat)[1]
-        Ilow = pm25_aqi.get(aqi_cat)[0]
-        Chigh = pm25_aqi.get(aqi_cat)[3]
-        Clow = pm25_aqi.get(aqi_cat)[2]
-        Ipm25 = int(round(
-            ((Ihigh - Ilow) / (Chigh - Clow) * (PM2_5 - Clow) + Ilow)
-            ))
-        return Ipm25
-    except Exception as e:
-        logging.exception('calc_aqi() error')
-
-
-def calc_epa(PM2_5, RH):
-    """
-    Calculate the EPA conversion for PM2.5 and relative humidity (RH) values.
-
-    Args:
-        PM2_5 (float): The PM2.5 concentration in micrograms per cubic meter (μg/m^3).
-        RH (float): The relative humidity as a percentage (%).
-
-    Returns:
-        float: The the EPA converted value for PM2.5 calculated using the given PM2.5 and RH values.
-
-    Raises:
-        Exception: If there was an error while calculating the EPA AQI.
-
-    Notes:
-        - If either PM2_5 or RH is a string, the EPA AQI will be set to 0.
-        - For PM2.5 values less than or equal to 343 μg/m^3, the following formula is used:
-            AQI = 0.52 * PM2.5 - 0.086 * RH + 5.75
-        - For PM2.5 values greater than 343 μg/m^3, the following formula is used:
-            AQI = 0.46 * PM2.5 + 3.93e-4 * PM2.5^2 + 2.97
-        - For negative or other invalid PM2.5 values, the EPA converted value will be set to 0.
-
-    """
-    try: 
-        # If either PM2_5 or RH is a string, the EPA conversion value will be set to 0.
-        if any(isinstance(x, str) for x in (PM2_5, RH)):
-            PM2_5_epa = 0
-        elif PM2_5 <= 343:
-            PM2_5_epa = 0.52 * PM2_5 - 0.086 * RH + 5.75
-        elif PM2_5 > 343:
-            PM2_5_epa = 0.46 * PM2_5 + 3.93 * 10 ** -4 * PM2_5 ** 2 + 2.97
-        else:
-            PM2_5_epa = 0
-        return PM2_5_epa
-    except Exception as e:
-        logging.exception('calc_epa() error')
-
-
 def current_process(df):
     """
     This function takes a pandas DataFrame as input and performs some processing on it.
@@ -298,12 +207,12 @@ def current_process(df):
     """
     df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
     df['Ipm25'] = df.apply(
-        lambda x: calc_aqi(x['pm2.5_atm_avg']),
+        lambda x: AQI.calculate(x['pm2.5_atm_avg']),
         axis=1
         )
     df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
     df['pm25_epa'] = df.apply(
-                lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
+                lambda x: EPA.calculate(x['pm2.5_cf_1_avg'], x['humidity']),
                 axis=1
                     )
     df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
@@ -315,7 +224,7 @@ def current_process(df):
     df['time_stamp'] = df['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df['time_stamp_pacific'] = df['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df = clean_data(df)
-    df = format_df(df)
+    df = format_data(df)
     return df
 
 
@@ -363,15 +272,15 @@ def process_data(DOCUMENT_NAME, client):
             df_tv = df.copy()
         df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
-            lambda x: calc_aqi(x['pm2.5_atm_avg']),
+            lambda x: AQI.calculate(x['pm2.5_atm_avg']),
             axis=1
             )
         df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
         df['pm25_epa'] = df.apply(
-                    lambda x: calc_epa(x['pm2.5_cf_1_avg'], x['humidity']),
+                    lambda x: EPA.calculate(x['pm2.5_cf_1_avg'], x['humidity']),
                     axis=1
                         )
-        df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+        df = df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
@@ -389,7 +298,7 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
         df_summarized = clean_data(df_summarized)
-        df_summarized = format_df(df_summarized)
+        df_summarized = format_data(df_summarized)
         write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
     return df_tv
@@ -423,7 +332,7 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     df_good_grouped = df_good.groupby('name')
     for k, v in df_grouped:
         try:
-            pct_good = 1 - (df_grouped.get_group(k).shape[0] - df_good_grouped.get_group(k).shape[0]) / df_grouped.get_group(k).shape[0]
+            pct_good = 1 - ((df_grouped.get_group(k).shape[0] - df_good_grouped.get_group(k).shape[0]) / df_grouped.get_group(k).shape[0])
         except KeyError as e:
             pct_good = 1.00
         max_delta = df_grouped.get_group(k)['pm2.5_atm_dif'].max()
