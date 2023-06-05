@@ -33,7 +33,7 @@ from time import sleep
 import calendar
 import math
 import logging
-from typing import Dict, List
+from typing import List
 import config
 
 # Setup exception logging
