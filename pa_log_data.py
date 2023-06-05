@@ -388,8 +388,8 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized = df_summarized.fillna('')
-        df = clean_data(df_summarized)
-        df = format_df(df_summarized)
+        df_summarized = clean_data(df_summarized)
+        df_summarized = format_df(df_summarized)
         write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
     return df_tv
