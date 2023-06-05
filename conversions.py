@@ -57,7 +57,7 @@ class AQI:
             Chigh = pm25_aqi.get(aqi_cat)[3]
             Clow = pm25_aqi.get(aqi_cat)[2]
             Ipm25 = int(round(
-                ((Ihigh - Ilow) / (Chigh - Clow) * (self.PM2_5 - Clow) + Ilow)
+                ((Ihigh - Ilow) / (Chigh - Clow) * (PM2_5 - Clow) + Ilow)
                 ))
             return Ipm25
         except Exception as e:
