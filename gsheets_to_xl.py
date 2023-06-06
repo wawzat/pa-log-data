@@ -96,8 +96,8 @@ def consolidate_sheets(args, spreadsheet_dict):
                 all_data_sheet = spreadsheet.worksheet('all_data')
                 all_data_sheet.clear()
         header_row = sheets[0].row_values(1)
-        header_row.insert(1, 'sensor_index')
-        header_row.insert(2, 'name')
+        header_row.insert(2, 'sensor_index')
+        header_row.insert(3, 'name')
         all_data = [header_row]
         # Consolidate data from all other sheets and add name and sensor index columns
         for sheet in sheets:
@@ -109,8 +109,8 @@ def consolidate_sheets(args, spreadsheet_dict):
                 # Add the name and sensor index columns to each row
                 for row in data:
                     sensor_index = config.sensors_current.get(sheet_name, {}).get('ID', '')
-                    row.insert(1, sensor_index)
-                    row.insert(2, sheet_name)
+                    row.insert(2, sensor_index)
+                    row.insert(3, sheet_name)
                 all_data.extend(data)
         # Update the "all_data" sheet with the combined data
         all_data_sheet.update('A1', all_data)
