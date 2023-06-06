@@ -264,10 +264,8 @@ def process_data(DOCUMENT_NAME, client):
                     sleep(90)
                 else:
                     logging.exception('process_data() gspread error max attempts reached')
-        # The first key in BBOX_DICT is for the local region. Save the df for later use by the sensor_health() function.
-        first_key = next(iter(config.BBOX_DICT))
-        if k == first_key:
-            df_tv = df.copy()
+        if config.local_region == k:
+            df_local = df.copy()
         df['Ipm25'] = df.apply(
             lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
             axis=1
@@ -296,7 +294,7 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized = format_data(df_summarized)
         write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
-    return df_tv
+    return df_local
 
 
 def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
@@ -419,7 +417,7 @@ def main():
             if status_et >= config.STATUS_INTERVAL_DURATION:
                 status_start = status_update(local_et, regional_et, process_et)
             if local_et >= config.LOCAL_INTERVAL_DURATION:
-                df_local = get_data(local_start, config.BBOX_DICT.get('TV')[0])
+                df_local = get_data(local_start, config.BBOX_DICT.get(config.local_region)[0])
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
