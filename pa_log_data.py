@@ -189,7 +189,8 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
 
 def current_process(df):
     """
-    This function takes a pandas DataFrame as input and performs some processing on it.
+    This function takes a pandas DataFrame as input, performs some processing on it and saves it as a Google Sheet.
+    The sheet will contain only the most recent data from each sensor
     
     Args:
         df (pandas.DataFrame): The DataFrame to be processed.
@@ -205,17 +206,17 @@ def current_process(df):
             - time_stamp_pacific
         - Data is cleaned according to EPA criteria.
     """
-    df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
+    #df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
     df['Ipm25'] = df.apply(
-        lambda x: AQI.calculate(x['pm2.5_atm_avg']),
+        lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
         axis=1
         )
-    df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
+    #df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
     df['pm25_epa'] = df.apply(
-                lambda x: EPA.calculate(x['pm2.5_cf_1_avg'], x['humidity']),
+                lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
                 axis=1
                     )
-    df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+    #df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
     df['time_stamp'] = pd.to_datetime(
         df['time_stamp'],
         format='%m/%d/%Y %H:%M:%S'
@@ -270,17 +271,17 @@ def process_data(DOCUMENT_NAME, client):
         first_key = next(iter(config.BBOX_DICT))
         if k == first_key:
             df_tv = df.copy()
-        df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
+        #df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
-            lambda x: AQI.calculate(x['pm2.5_atm_avg']),
+            lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
             axis=1
             )
-        df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
+        #df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
         df['pm25_epa'] = df.apply(
-                    lambda x: EPA.calculate(x['pm2.5_cf_1_avg'], x['humidity']),
+                    lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5cf_1_b']),
                     axis=1
                         )
-        df = df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+        #df = df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
@@ -318,7 +319,7 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
         None
 
     This function compares the readings from two PurpleAir sensor channels (A and B) and removes data points where the difference
-    is greater than or equal to 5 ug/m^3 and 70%. For each sensor, it calculates the percentage of "good" data points,
+    is greater than or equal to 5 ug/m^3 or 70%. For each sensor, it calculates the percentage of "good" data points,
     which is defined as the percentage of data points that passed the threshold check. 
     It also calculates the maximum difference between the A and B channels,
     the mean signal strength (RSSI), and the maximum uptime for each sensor. 
