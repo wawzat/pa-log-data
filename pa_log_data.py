@@ -206,17 +206,14 @@ def current_process(df):
             - time_stamp_pacific
         - Data is cleaned according to EPA criteria.
     """
-    #df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
     df['Ipm25'] = df.apply(
         lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
         axis=1
         )
-    #df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
     df['pm25_epa'] = df.apply(
                 lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
                 axis=1
-                    )
-    #df= df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+                )
     df['time_stamp'] = pd.to_datetime(
         df['time_stamp'],
         format='%m/%d/%Y %H:%M:%S'
@@ -271,17 +268,14 @@ def process_data(DOCUMENT_NAME, client):
         first_key = next(iter(config.BBOX_DICT))
         if k == first_key:
             df_tv = df.copy()
-        #df['pm2.5_atm_avg'] = df[['pm2.5_atm_a','pm2.5_atm_b']].mean(axis=1)
         df['Ipm25'] = df.apply(
             lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
             axis=1
             )
-        #df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
         df['pm25_epa'] = df.apply(
                     lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
                     axis=1
-                        )
-        #df = df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
+                    )
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
