@@ -1,7 +1,7 @@
-# Regularly Polls Purpleair api for outdoor sensor data for sensors within deined rectangular geographic regions at a defined interval.
+# Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230605
+# James S. Lucas - 20230606
 
 import sys
 import requests
@@ -264,7 +264,7 @@ def process_data(DOCUMENT_NAME, client):
                     sleep(90)
                 else:
                     logging.exception('process_data() gspread error max attempts reached')
-        if config.local_region == k:
+        if config.LOCAL_REGION == k:
             df_local = df.copy()
         df['Ipm25'] = df.apply(
             lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
@@ -417,7 +417,7 @@ def main():
             if status_et >= config.STATUS_INTERVAL_DURATION:
                 status_start = status_update(local_et, regional_et, process_et)
             if local_et >= config.LOCAL_INTERVAL_DURATION:
-                df_local = get_data(local_start, config.BBOX_DICT.get(config.local_region)[0])
+                df_local = get_data(local_start, config.BBOX_DICT.get(config.LOCAL_REGION)[0])
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
                     write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
