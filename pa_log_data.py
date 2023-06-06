@@ -278,7 +278,7 @@ def process_data(DOCUMENT_NAME, client):
             )
         #df['pm2.5_cf_1_avg'] = df[['pm2.5_cf_1_a','pm2.5_cf_1_b']].mean(axis=1)
         df['pm25_epa'] = df.apply(
-                    lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5cf_1_b']),
+                    lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
                     axis=1
                         )
         #df = df.drop(columns=['pm2.5_atm_avg', 'pm2.5_cf_1_avg'])
