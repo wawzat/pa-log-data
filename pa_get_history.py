@@ -34,6 +34,7 @@ import calendar
 import math
 import logging
 from typing import List
+from conversions import EPA, AQI
 import config
 
 # Setup exception logging
@@ -141,7 +142,7 @@ def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
             'end_timestamp': end_timestamp
         }
         url: str = root_url.format(**params)
-        cols: List[str] = ['time_stamp'] + [col for col in params['fields'].split(',')]
+        cols: List[str] = ['time_stamp', 'time_stamp_pacific'] + [col for col in params['fields'].split(',')] + ['pm25_epa'] + ['Ipm25']
         try:
             response = session.get(url)
         except Exception as e:
@@ -151,18 +152,33 @@ def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
             url_data = response.content
             json_data = json.loads(url_data)
             df_temp = pd.DataFrame(json_data['data'], columns=json_data['fields'])
-            df_temp = df_temp.fillna('')
-            df_temp['time_stamp'] = pd.to_datetime(df_temp['time_stamp'], unit='s')
-            df_temp['time_stamp'] = df_temp['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
-            df_list.append(df_temp)  # Append dataframe to the list
-            latest_end_timestamp = end_timestamp  # Update the latest end timestamp
+            if loop_num < (num_iterations) and df_temp.empty:
+                continue
+            elif loop_num == (num_iterations) and df_temp.empty:
+                return pd.DataFrame()
+            else:
+                df_temp = df_temp.fillna('')
+                df_temp['time_stamp'] = pd.to_datetime(df_temp['time_stamp'], unit='s')
+                df_temp['time_stamp_pacific'] = df_temp['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
+                df_temp['time_stamp'] = df_temp['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
+                df_temp['time_stamp_pacific'] = df_temp['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
+                df_temp['Ipm25'] = df_temp.apply(
+                    lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
+                    axis=1
+                    )
+                df_temp['pm25_epa'] = df_temp.apply(
+                            lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
+                            axis=1
+                            )
+                df_list.append(df_temp)  # Append dataframe to the list
+                latest_end_timestamp = end_timestamp  # Update the latest end timestamp
         else:
             logging.exception('get_data() response not ok')
-        sleep(10)
-    if len(df_list) > 0:
-        df = pd.concat(df_list, ignore_index=True)  # Concatenate dataframes
-        df = df[cols]  # Reorder columns
-        df = df.sort_values('time_stamp')  # Sort by time_stamp
+            sleep(10)
+        if len(df_list) > 0:
+            df = pd.concat(df_list, ignore_index=True)  # Concatenate dataframes
+            df = df[cols]  # Reorder columns
+            df = df.sort_values('time_stamp')  # Sort by time_stamp
     return df
 
 
@@ -245,8 +261,9 @@ def main():
             print(message)
             print()
             exit()
-        DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}'
-        write_data(df, client, DOCUMENT_NAME, args.sensor_name, yr, mnth, config.WRITE_CSV)
+        if len(df.index) > 0:
+            DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}'
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, yr, mnth, config.WRITE_CSV)
     else:
         loop_num = 0
         for k, v in config.sensors_current.items():
