@@ -22,7 +22,14 @@ import logging
 
 class AQI:
     @staticmethod
-    def calculate(PM2_5):
+    def calculate(PM, *args):
+        # Calculate average of the arguments
+        total = PM
+        count = 1
+        for arg in args:
+            total += arg
+            count += 1
+        PM2_5 = total / count
         PM2_5 = int(PM2_5 * 10) / 10.0
         if PM2_5 < 0:
             PM2_5 = 0
@@ -65,7 +72,14 @@ class AQI:
 
 class EPA:
     @staticmethod
-    def calculate(PM2_5, RH):
+    def calculate(RH, PM, *args):
+        # Calculate average of the arguments
+        total = PM
+        count = 1
+        for arg in args:
+            total += arg
+            count += 1
+        PM2_5 = total / count
         try: 
             # If either PM2_5 or RH is a string, the EPA conversion value will be set to 0.
             if any(isinstance(x, str) for x in (PM2_5, RH)):
