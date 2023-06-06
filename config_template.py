@@ -9,7 +9,7 @@ SERVICE_ACCOUNT_USER_EMAIL = 'username@project_name.iam.gserviceaccount.com'
 #user_directory = r' '
 MATRIX5 = r'c:\Users\username\OneDrive\Documents\House\PurpleAir'
 
-# First dictionary entry should be for the "local" region"
+local_region = 'DT'
 #           SW lon / lat            NE lon / lat
 BBOX_DICT = { 'DT': (('-118.5298', '35.7180', '-118.4166', '35.8188'), 'DT', 'Delta Transit'),
 'QC': (('-118.455864', '35.855306', '-118.185326', '35.018518'), 'Qual College'),
