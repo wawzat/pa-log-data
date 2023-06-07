@@ -128,10 +128,16 @@ def sheet_to_xl(spreadsheet, all_data):
     if not os.path.isdir(full_path):
         os.mkdir(full_path)
     file_name = full_path / 'combined_summarized_xl.xlsx'
+    writer = pd.ExcelWriter(file_name,
+                            engine='xlsxwriter',
+                            engine_kwargs={'options': {'strings_to_numbers': True}}
+                            )
+
     # Convert the data to a pandas DataFrame
     df = pd.DataFrame(all_data[1:], columns=all_data[0])
     # Export the DataFrame to Excel
-    df.to_excel(file_name, index=False)
+    df.to_excel(writer, sheet_name='Sheet1', index=False)
+    writer.close()
     print(f'File {file_name} created.')
 
 
