@@ -86,7 +86,8 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     df[config.cols_5] = df[config.cols_5].astype(int)
     df[config.cols_6] = df[config.cols_6].round(2)
     df[config.cols_7] = df[config.cols_7].round(2)
-    df[config.cols_8] = df[config.cols_8].astype(int)
+    df[config.cols_8] = df[config.cols_8].round(2)
+    df[config.cols_9] = df[config.cols_9].astype(int)
     df = df[config.cols]
     return df
 
