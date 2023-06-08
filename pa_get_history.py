@@ -182,8 +182,7 @@ def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
     return df
 
 
-
-def write_data(df, client, DOCUMENT_NAME, k, yr, mnth, WRITE_CSV=False):
+def write_data(df, client, DOCUMENT_NAME, k, WRITE_CSV=False):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
 
@@ -263,7 +262,7 @@ def main():
             exit()
         if len(df.index) > 0:
             DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, yr, mnth, config.WRITE_CSV)
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, config.WRITE_CSV)
     else:
         loop_num = 0
         for k, v in config.sensors_current.items():
@@ -275,7 +274,7 @@ def main():
             print()
             if len(df.index) > 0:
                 DOCUMENT_NAME = f'pa_history_{yr}_{mnth}'
-                write_data(df, client, DOCUMENT_NAME, k, yr, mnth, config.WRITE_CSV)
+                write_data(df, client, DOCUMENT_NAME, k, config.WRITE_CSV)
             sleep(60)
             end_time = datetime.now()
             time_per_loop = (end_time - start_time) / loop_num
