@@ -132,7 +132,6 @@ def sheet_to_xl(spreadsheet, all_data):
                             engine='xlsxwriter',
                             engine_kwargs={'options': {'strings_to_numbers': True}}
                             )
-
     # Convert the data to a pandas DataFrame
     df = pd.DataFrame(all_data[1:], columns=all_data[0])
     # Export the DataFrame to Excel
@@ -176,7 +175,7 @@ def main():
                 spreadsheet = {'name': sheet_name}
                 consolidate_sheets(args, spreadsheet)
             else:
-                print(f'Sheet name: {sheet_name} not found.')
+                print(f'Sheet name: {sheet_name} not found, exiting...')
 
 
 if __name__ == '__main__':
