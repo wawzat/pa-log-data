@@ -85,9 +85,9 @@ class EPA:
             if any(isinstance(x, str) for x in (PM2_5, RH)):
                 PM2_5_epa = 0
             elif PM2_5 <= 343:
-                PM2_5_epa = 0.52 * PM2_5 - 0.086 * RH + 5.75
+                PM2_5_epa = round((0.52 * PM2_5 - 0.086 * RH + 5.75), 3)
             elif PM2_5 > 343:
-                PM2_5_epa = 0.46 * PM2_5 + 3.93 * 10 ** -4 * PM2_5 ** 2 + 2.97
+                PM2_5_epa = round((0.46 * PM2_5 + 3.93 * 10 ** -4 * PM2_5 ** 2 + 2.97), 3)
             else:
                 PM2_5_epa = 0
             return PM2_5_epa
