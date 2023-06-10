@@ -85,6 +85,48 @@ def list_sheets(spreadsheets):
     print()
 
 
+def format_spreadsheet(writer):
+    # Set the column formats and widths
+    workbook = writer.book
+    worksheet = writer.sheets['Sheet1']
+    format1 = workbook.add_format({'num_format': 'm-d-Y h:mm:ss'})
+    format2 = workbook.add_format({'num_format': '#,##0.00'})
+    format3 = workbook.add_format({'num_format': '#,##0.000'})
+    format4 = workbook.add_format({'num_format': '#,##0.0000'})
+    format5 = workbook.add_format({'num_format': '#,##0'})
+    worksheet.set_column('A:A', 19, format1)
+    worksheet.set_column('B:B', 19, format1)
+    worksheet.set_column('C:C', 13, format5)
+    worksheet.set_column('D:D', 27, format5)
+    worksheet.set_column('E:E', 4, format5)
+    worksheet.set_column('F:F', 9, format5)
+    worksheet.set_column('G:G', 9, format3)
+    worksheet.set_column('H:H', 12, format3)
+    worksheet.set_column('I:I', 10, format3)
+    worksheet.set_column('J:J', 6, format2)
+    worksheet.set_column('K:K', 13, format3)
+    worksheet.set_column('L:L', 13, format3)
+    worksheet.set_column('M:M', 13, format3)
+    worksheet.set_column('N:N', 13, format3)
+    worksheet.set_column('O:O', 14, format3)
+    worksheet.set_column('P:P', 14, format3)
+    worksheet.set_column('Q:Q', 13, format3)
+    worksheet.set_column('R:R', 13, format3)
+    worksheet.set_column('S:S', 13, format3)
+    worksheet.set_column('T:T', 13, format3)
+    worksheet.set_column('U:U', 14, format3)
+    worksheet.set_column('V:V', 14, format3)
+    worksheet.set_column('W:W', 13, format4)
+    worksheet.set_column('X:X', 13, format4)
+    worksheet.set_column('Y:Y', 13, format4)
+    worksheet.set_column('Z:Z', 13, format4)
+    worksheet.set_column('AA:AA', 13, format4)
+    worksheet.set_column('AB:AB', 14, format4)
+    worksheet.set_column('AC:AC', 10, format3)
+    worksheet.set_column('AD:AD', 6, format5)
+    worksheet.freeze_panes(1, 0)
+
+
 def consolidate_sheets(args, spreadsheet_dict):
         spreadsheet = client.open(spreadsheet_dict['name'])
         sheets = spreadsheet.worksheets()
@@ -136,6 +178,7 @@ def sheet_to_xl(spreadsheet, all_data):
     df = pd.DataFrame(all_data[1:], columns=all_data[0])
     # Export the DataFrame to Excel
     df.to_excel(writer, sheet_name='Sheet1', index=False)
+    format_spreadsheet(writer)
     writer.close()
     print(f'File {file_name} created.')
 
