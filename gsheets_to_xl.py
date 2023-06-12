@@ -24,6 +24,7 @@ import argparse
 import pathlib
 import pandas as pd
 import config
+import constants
 
 def get_arguments():
     parser = argparse.ArgumentParser(
@@ -143,38 +144,37 @@ def consolidate_sheets(args, spreadsheet_dict):
     Raises:
     - None
     """
-def consolidate_sheets(args, spreadsheet_dict):
-        spreadsheet = client.open(spreadsheet_dict['name'])
-        sheets = spreadsheet.worksheets()
-        try:
-            all_data_sheet = spreadsheet.add_worksheet(title='all_data', rows='1', cols='1')
-            print(f'Created sheet {all_data_sheet.title}.')
-        except gspread.exceptions.APIError as e:
-            if 'addSheet' in str(e):
-                all_data_sheet = spreadsheet.worksheet('all_data')
-                all_data_sheet.clear()
-        header_row = sheets[0].row_values(1)
-        header_row.insert(2, 'sensor_index')
-        header_row.insert(3, 'name')
-        all_data = [header_row]
-        # Consolidate data from all other sheets and add name and sensor index columns
-        for sheet in sheets:
-            if sheet.title != 'all_data':
-                data = sheet.get_all_values()
-                sheet_name = sheet.title
-                # Exclude the header row after the first occurrence
-                data = data[1:]
-                # Add the name and sensor index columns to each row
-                for row in data:
-                    sensor_index = config.sensors_current.get(sheet_name, {}).get('ID', '')
-                    row.insert(2, sensor_index)
-                    row.insert(3, sheet_name)
-                all_data.extend(data)
-        # Update the "all_data" sheet with the combined data
-        all_data_sheet.update('A1', all_data)
-        print(f"Updated sheet {all_data_sheet.title} in {spreadsheet_dict['name']}.")
-        if args.xl is True:
-                sheet_to_xl(spreadsheet_dict, all_data)
+    spreadsheet = client.open(spreadsheet_dict['name'])
+    sheets = spreadsheet.worksheets()
+    try:
+        all_data_sheet = spreadsheet.add_worksheet(title='all_data', rows='1', cols='1')
+        print(f'Created sheet {all_data_sheet.title}.')
+    except gspread.exceptions.APIError as e:
+        if 'addSheet' in str(e):
+            all_data_sheet = spreadsheet.worksheet('all_data')
+            all_data_sheet.clear()
+    header_row = sheets[0].row_values(1)
+    header_row.insert(2, 'sensor_index')
+    header_row.insert(3, 'name')
+    all_data = [header_row]
+    # Consolidate data from all other sheets and add name and sensor index columns
+    for sheet in sheets:
+        if sheet.title != 'all_data':
+            data = sheet.get_all_values()
+            sheet_name = sheet.title
+            # Exclude the header row after the first occurrence
+            data = data[1:]
+            # Add the name and sensor index columns to each row
+            for row in data:
+                sensor_index = constants.sensors_current.get(sheet_name, {}).get('ID', '')
+                row.insert(2, sensor_index)
+                row.insert(3, sheet_name)
+            all_data.extend(data)
+    # Update the "all_data" sheet with the combined data
+    all_data_sheet.update('A1', all_data)
+    print(f"Updated sheet {all_data_sheet.title} in {spreadsheet_dict['name']}.")
+    if args.xl is True:
+            sheet_to_xl(spreadsheet_dict, all_data)
 
 
 def sheet_to_xl(spreadsheet, all_data):
@@ -195,7 +195,7 @@ def sheet_to_xl(spreadsheet, all_data):
     year = name_parts[2]
     month = name_parts[3]
     folder_name = f'{year}-{month.zfill(2)}'
-    full_path = pathlib.Path(config.MATRIX5, folder_name)
+    full_path = pathlib.Path(constants.MATRIX5, folder_name)
     if not os.path.isdir(full_path):
         os.mkdir(full_path)
     file_name = full_path / 'combined_summarized_xl.xlsx'
