@@ -30,6 +30,7 @@
         - CP Proc
         - Health
         - Regional
+        - Current
  
     - The two character sheets will contain raw logged data and the sheets with a "Proc" suffix will contain processed data for each corresponding region.
 
