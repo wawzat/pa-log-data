@@ -19,8 +19,12 @@ from tabulate import tabulate
 import logging
 from typing import List
 from conversions import AQI, EPA
-import config
 import constants
+from configparser import ConfigParser
+
+# Read config file
+config = ConfigParser()
+config.read('config.ini')
 
 # Setup exception logging
 format_string = '%(name)s - %(asctime)s : %(message)s'
@@ -30,7 +34,8 @@ logging.basicConfig(filename='error.log',
 session = requests.Session()
 retry = Retry(connect=5, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
-session.headers.update({'X-API-Key': config.PURPLEAIR_READ_KEY})
+PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
+session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
 file_name: str = 'pa_log_test.csv'
@@ -43,7 +48,8 @@ elif sys.platform == 'linux':
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
                     ]
-creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
+GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
+creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
 
