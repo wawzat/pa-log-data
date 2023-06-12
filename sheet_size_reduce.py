@@ -20,6 +20,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import argparse
 from time import sleep
 import config
+import constants
 
 
 # set the credentials for the Google Sheets service account
@@ -90,7 +91,7 @@ args = get_arguments()
 
 sheets = ()
 if args.all is True:
-    for k, v in config.BBOX_DICT.items():
+    for k, v in constants.BBOX_DICT.items():
         sheets += (k,)
 else:
     sheets = (args.sheet_name,)
@@ -111,7 +112,7 @@ for index, sheet_name in enumerate(sheets):
     attempts: int = 0
     while attempts < MAX_ATTEMPTS:
         try:
-            sheet = client.open(config.DOCUMENT_NAME).worksheet(sheet_name)
+            sheet = client.open(constants.DOCUMENT_NAME).worksheet(sheet_name)
             break
         except gspread.exceptions.WorksheetNotFound as e:
             print(' ')
