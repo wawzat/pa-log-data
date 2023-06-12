@@ -4,12 +4,13 @@
 
 ### Notes:
  
-- Rename config_template.py to config.py.
-- Edit config.py with your API keys and credentials
+- There are two files you need to edit before running the program: config.ini and constants.py.
+- Rename config_template.ini to config.ini.
+- Edit config.ini with your API keys and credentials
 - Edit constants.py document names, file paths and preferences.
 - Edit constants.py BBOX_DICT with your region abbreviations and coordinates. 
 - bbox finder is handy for getting rectangular coordinates: http://bboxfinder.com/#0.000000,0.000000,0.000000,0.000000 
-- Name the Google Sheets worksheet document with the name you provided for DOCUMENT_NAME in config.py 
+- Name the Google Sheets worksheet document with the name you provided for DOCUMENT_NAME in constants.py 
 - Manually create empty Google Sheets sheets with names corresponding to regions.
   - For example, for the BBOX_DICT below:
     - BBOX_DICT = {
@@ -35,7 +36,7 @@
 - Setup an application and API keys for Google Sheets. https://developers.google.com/workspace/guides/create-credentials 
 - Read the gspread documentation for authentication instructions. https://docs.gspread.org/en/v5.7.2/oauth2.html 
 - PurpleAir API keys may be obtained from PurpleAir. https://community.purpleair.com/t/creating-api-keys/3951 
-- Sensor data are gathered for a "local" region and other regions as defined in config.py.
+- Sensor data are gathered for a "local" region and other regions as defined in constants.py.
 - Sensor Confidence is calculated as the percentage of data discarded after cleaning with EPA criteria and may not match displayed PurpleAir Confidence percentages.
 - The WRITE_CSV parameter only captures the latest local sensor data to a local CSV file. Used for testing purposes.
 - requirements.txt is included for installing the required non-standard Python libraries (i.e., pip: -r requirements.txt)
