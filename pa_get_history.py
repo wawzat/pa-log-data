@@ -17,7 +17,7 @@ The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20230603
+# James S. Lucas - 20230612
 
 import sys
 import requests
@@ -37,6 +37,7 @@ import logging
 from typing import List
 from conversions import EPA, AQI
 import config
+import constants
 
 # Setup exception logging
 format_string = '%(name)s - %(asctime)s : %(message)s'
@@ -51,7 +52,7 @@ session.mount('http://', adapter)
 session.mount('https://', adapter)
 file_name: str = 'pa_log_test.csv'
 if sys.platform == 'win32':
-    output_pathname = Path(config.MATRIX5, file_name)
+    output_pathname = Path(constants.MATRIX5, file_name)
 elif sys.platform == 'linux':
     cwd: str = Path.cwd()
     output_pathname: str = Path(cwd, file_name)
@@ -255,7 +256,7 @@ def main():
     start_time = datetime.now()
     if args.sensor_name is not None:
         try:
-            df = get_data(config.sensors_current[args.sensor_name]['ID'], yr, mnth)
+            df = get_data(constants.sensors_current[args.sensor_name]['ID'], yr, mnth)
         except KeyError as e:
             message = f'Invalid sensor name: {args.sensor_name}, exiting...'
             print(message)
@@ -263,23 +264,23 @@ def main():
             exit()
         if len(df.index) > 0:
             DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, config.WRITE_CSV)
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, constants.WRITE_CSV)
     else:
         loop_num = 0
-        for k, v in config.sensors_current.items():
+        for k, v in constants.sensors_current.items():
             loop_num += 1
-            message = f'Getting data for sensor {k} for {calendar.month_name[mnth]} {yr}, {loop_num} of {len(config.sensors_current)}' 
+            message = f'Getting data for sensor {k} for {calendar.month_name[mnth]} {yr}, {loop_num} of {len(constants.sensors_current)}' 
             print(message)
             df = get_data(v['ID'], yr, mnth)
             #print(df)
             print()
             if len(df.index) > 0:
                 DOCUMENT_NAME = f'pa_history_{yr}_{mnth}'
-                write_data(df, client, DOCUMENT_NAME, k, config.WRITE_CSV)
+                write_data(df, client, DOCUMENT_NAME, k, constants.WRITE_CSV)
             sleep(60)
             end_time = datetime.now()
             time_per_loop = (end_time - start_time) / loop_num
-            time_remaining = time_per_loop * (len(config.sensors_current) - loop_num)
+            time_remaining = time_per_loop * (len(constants.sensors_current) - loop_num)
             print(f'Time per loop: {time_per_loop} / Time remaining: {time_remaining}')
 
 
