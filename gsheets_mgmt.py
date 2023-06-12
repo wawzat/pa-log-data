@@ -16,11 +16,15 @@ Example:
 This will list all the Google Sheets files associated (owned or shared) with the service account and optionally delete 
 all the files owned by the Service Account with 'pa_history' in their name, except for those with '401K' or 'data' in their name.
 """
-# James S. Lucas 20230601
+# James S. Lucas 20230612
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import argparse
-import config
+from configparser import ConfigParser
+
+# read the config file
+config = ConfigParser()
+config.read('config.ini')
 
 def get_arguments():
     parser = argparse.ArgumentParser(
@@ -44,7 +48,8 @@ args = get_arguments()
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive'
         ]
-creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
+GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
+creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
 spreadsheets = client.list_spreadsheet_files()

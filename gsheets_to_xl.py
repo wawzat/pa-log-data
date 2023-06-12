@@ -23,8 +23,11 @@ from oauth2client.service_account import ServiceAccountCredentials
 import argparse
 import pathlib
 import pandas as pd
-import config
 import constants
+from configparser import ConfigParser
+
+config = ConfigParser()
+config.read('config.ini')
 
 def get_arguments():
     parser = argparse.ArgumentParser(
@@ -67,7 +70,8 @@ def get_arguments():
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive'
         ]
-creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
+GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
+creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
 

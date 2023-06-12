@@ -6,8 +6,8 @@ of sensors is retrieved from constants.py and the program loops through the list
 The sensor data is then uploaded to a Google Sheets document using the Google Sheets API.
 
 The program requires a Google Sheets service account JSON file and a PurpleAir API key to function properly. 
-The service account JSON file should be stored in a secure location and the path to the file should be specified in the `config.py` file. 
-The PurpleAir API key should also be specified in the `config.py` file.
+The service account JSON file should be stored in a secure location and the path to the file should be specified in the `config.ini` file. 
+The PurpleAir API key should also be specified in the `config.ini` file.
 
 The program can be run from the command line with the following arguments:
     -m, --month: Integer of the month to get data for.
@@ -37,8 +37,12 @@ import math
 import logging
 from typing import List
 from conversions import EPA, AQI
-import config
 import constants
+from configparser import ConfigParser
+
+# Read the configuration file
+config = ConfigParser()
+config.read('config.ini')
 
 # Setup exception logging
 format_string = '%(name)s - %(asctime)s : %(message)s'
@@ -48,7 +52,8 @@ logging.basicConfig(filename='pa_get_history_error.log',
 session = requests.Session()
 retry = Retry(connect=5, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
-session.headers.update({'X-API-Key': config.PURPLEAIR_READ_KEY})
+PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
+session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
 file_name: str = 'pa_log_test.csv'
@@ -62,7 +67,8 @@ elif sys.platform == 'linux':
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
                     ]
-creds = ServiceAccountCredentials.from_json_keyfile_name(config.GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
+GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
+creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
 
@@ -216,7 +222,8 @@ def write_data(df, client, DOCUMENT_NAME, k, WRITE_CSV=False):
             print(message)
             client.create(DOCUMENT_NAME)
             spreadsheet = client.open(DOCUMENT_NAME)
-            spreadsheet.share(config.google_account, perm_type='user', role='writer')
+            google_account = config.get('google', 'google_account')
+            spreadsheet.share(google_account, perm_type='user', role='writer')
         try:
             sheet = spreadsheet.worksheet(worksheet_name)
             sheet.clear()

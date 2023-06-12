@@ -19,15 +19,19 @@ from datetime import datetime, timedelta
 from oauth2client.service_account import ServiceAccountCredentials
 import argparse
 from time import sleep
-import config
 import constants
+from configparser import ConfigParser
+
+# read the config file
+config = ConfigParser()
+config.read('config.ini')
 
 
 # set the credentials for the Google Sheets service account
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    config.GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
+GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
+creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
 
