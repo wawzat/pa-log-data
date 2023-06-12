@@ -226,7 +226,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
     # Write the data to local csv file 
     if WRITE_CSV is True:
         try:
-            df.to_csv(output_pathname, mode='a' index=True, header=True)
+            df.to_csv(output_pathname, mode='a', index=True, header=True)
         except Exception as e:
             logging.exception('write_data() error writing csv')
 
