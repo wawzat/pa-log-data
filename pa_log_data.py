@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
