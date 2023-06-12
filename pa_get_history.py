@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This program retrieves historical data from PurpleAir sensors and adds it to a Google Sheets document. 
 It uses the PurpleAir API to retrieve sensor data for a given sensor ID and time frame, and saves the data to a CSV file. 
