@@ -15,7 +15,7 @@ Arguments:
     -x, --xl: Argument to copy all of the sheets to the all_data sheet and export to Excel. 
     -l, --list: Argument to list all of the sheets.
 """
-# James S. Lucas 20230601
+# James S. Lucas 20230612
 import os
 from time import sleep
 import gspread
@@ -128,6 +128,22 @@ def format_spreadsheet(writer):
 
 
 def consolidate_sheets(args, spreadsheet_dict):
+    """
+    Consolidates data from all sheets in a Google Spreadsheet and adds name and sensor index columns to each row.
+    The consolidated data is then updated in the "all_data" sheet of the same Google Spreadsheet.
+    If the -x or --xl argument is passed, the consolidated data is exported to an Excel file.
+    
+    Args:
+    - args: An argparse.Namespace object containing the command line arguments passed to the script.
+    - spreadsheet_dict: A dictionary containing the name of the Google Spreadsheet to consolidate.
+    
+    Returns:
+    - None
+    
+    Raises:
+    - None
+    """
+def consolidate_sheets(args, spreadsheet_dict):
         spreadsheet = client.open(spreadsheet_dict['name'])
         sheets = spreadsheet.worksheets()
         try:
@@ -162,6 +178,19 @@ def consolidate_sheets(args, spreadsheet_dict):
 
 
 def sheet_to_xl(spreadsheet, all_data):
+    """
+    Converts the data in `all_data` to a pandas DataFrame and exports it to an Excel file.
+    
+    Args:
+    - spreadsheet: A dictionary containing the name of the spreadsheet to export.
+    - all_data: A list containing the data to be exported to Excel.
+    
+    Returns:
+    - None
+    
+    Raises:
+    - None
+    """
     name_parts = spreadsheet['name'].split('_')
     year = name_parts[2]
     month = name_parts[3]
