@@ -20,6 +20,7 @@ import logging
 from typing import List
 from conversions import AQI, EPA
 import config
+import constants
 
 # Setup exception logging
 format_string = '%(name)s - %(asctime)s : %(message)s'
@@ -34,7 +35,7 @@ session.mount('http://', adapter)
 session.mount('https://', adapter)
 file_name: str = 'pa_log_test.csv'
 if sys.platform == 'win32':
-    output_pathname: str = Path(config.MATRIX5, file_name)
+    output_pathname: str = Path(constants.MATRIX5, file_name)
 elif sys.platform == 'linux':
     cwd: str = Path.cwd()
     output_pathname: str = Path(cwd, file_name)
@@ -59,12 +60,12 @@ def status_update(local_et, regional_et, process_et):
         A datetime object representing the current time.
     """
 
-    local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_et) / 60)
-    local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_et) % 60)
-    regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_et) / 60)
-    regional_seconds = int((config.REGIONAL_INTERVAL_DURATION - regional_et) % 60)
-    process_minutes = int((config.PROCESS_INTERVAL_DURATION - process_et) / 60)
-    process_seconds = int((config.PROCESS_INTERVAL_DURATION - process_et) % 60)
+    local_minutes = int((constants.LOCAL_INTERVAL_DURATION - local_et) / 60)
+    local_seconds = int((constants.LOCAL_INTERVAL_DURATION - local_et) % 60)
+    regional_minutes = int((constants.REGIONAL_INTERVAL_DURATION - regional_et) / 60)
+    regional_seconds = int((constants.REGIONAL_INTERVAL_DURATION - regional_et) % 60)
+    process_minutes = int((constants.PROCESS_INTERVAL_DURATION - process_et) / 60)
+    process_seconds = int((constants.PROCESS_INTERVAL_DURATION - process_et) % 60)
     table_data = [
         ['Local:', f"{local_minutes:02d}:{local_seconds:02d}"],
         ['Regional:', f"{regional_minutes:02d}:{regional_seconds:02d}"],
@@ -126,13 +127,13 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         A new DataFrame with the specified columns rounded or converted to integers.
     """
-    df[config.cols_4] = df[config.cols_4].round(2)
-    df[config.cols_5] = df[config.cols_5].astype(int)
-    df[config.cols_6] = df[config.cols_6].round(2)
-    df[config.cols_7] = df[config.cols_7].round(2)
-    df[config.cols_8] = df[config.cols_8].round(2)
-    df[config.cols_9] = df[config.cols_9].astype(int)
-    df = df[config.cols]
+    df[constants.cols_4] = df[constants.cols_4].round(2)
+    df[constants.cols_5] = df[constants.cols_5].astype(int)
+    df[constants.cols_6] = df[constants.cols_6].round(2)
+    df[constants.cols_7] = df[constants.cols_7].round(2)
+    df[constants.cols_8] = df[constants.cols_8].round(2)
+    df[constants.cols_9] = df[constants.cols_9].astype(int)
+    df = df[constants.cols]
     return df
 
 
@@ -290,7 +291,7 @@ def process_data(DOCUMENT_NAME, client):
         '5.0_um_count', '10.0_um_count', 'pm25_epa', 'Ipm25'.
     """
     write_mode: str = 'update'
-    for k, v in config.BBOX_DICT.items():
+    for k, v in constants.BBOX_DICT.items():
         # open the Google Sheets input worksheet and read in the data
         in_worksheet_name: str = k
         out_worksheet_name: str = k + ' Proc'
@@ -309,7 +310,7 @@ def process_data(DOCUMENT_NAME, client):
                     sleep(90)
                 else:
                     logging.exception('process_data() gspread error max attempts reached')
-        if config.LOCAL_REGION == k:
+        if constants.LOCAL_REGION == k:
             # Save the dataframe for later use by the regional_stats() and sensor_health() functions
             df_local = df.copy()
         df['Ipm25'] = df.apply(
@@ -325,9 +326,9 @@ def process_data(DOCUMENT_NAME, client):
             format='%m/%d/%Y %H:%M:%S'
         )
         df = df.set_index('time_stamp')
-        df[config.cols_6] = df[config.cols_6].replace('', 0)
-        df[config.cols_6] = df[config.cols_6].astype(float)
-        df_summarized = df.groupby('name').resample(config.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
+        df[constants.cols_6] = df[constants.cols_6].replace('', 0)
+        df[constants.cols_6] = df[constants.cols_6].astype(float)
+        df_summarized = df.groupby('name').resample(constants.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp_pacific'] = df_summarized['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
@@ -407,7 +408,7 @@ def regional_stats(client, DOCUMENT_NAME):
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
     MAX_ATTEMPTS: int = 3
     attempts: int = 0
-    for k, v in config.BBOX_DICT.items():
+    for k, v in constants.BBOX_DICT.items():
         worksheet_name = v[1] + ' Proc'
         while attempts < MAX_ATTEMPTS:
             try:
@@ -448,11 +449,11 @@ def regional_stats(client, DOCUMENT_NAME):
 
 def main():
     five_min_ago: datetime = datetime.now() - timedelta(minutes=5)
-    for k, v in config.BBOX_DICT.items():
-        df = get_data(five_min_ago, config.BBOX_DICT.get(k)[0])
+    for k, v in constants.BBOX_DICT.items():
+        df = get_data(five_min_ago, constants.BBOX_DICT.get(k)[0])
         if len(df.index) > 0:
             write_mode = 'append'
-            write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(k)[1], write_mode, config.WRITE_CSV)
+            write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode, constants.WRITE_CSV)
         else:
             pass
     local_start, regional_start, process_start, status_start = datetime.now(), datetime.now(), datetime.now(), datetime.now()
@@ -460,32 +461,32 @@ def main():
         try:
             sleep(.1)
             local_et, regional_et, process_et, status_et = elapsed_time(local_start, regional_start, process_start, status_start)
-            if status_et >= config.STATUS_INTERVAL_DURATION:
+            if status_et >= constants.STATUS_INTERVAL_DURATION:
                 status_start = status_update(local_et, regional_et, process_et)
-            if local_et >= config.LOCAL_INTERVAL_DURATION:
-                df_local = get_data(local_start, config.BBOX_DICT.get(config.LOCAL_REGION)[0])
+            if local_et >= constants.LOCAL_INTERVAL_DURATION:
+                df_local = get_data(local_start, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0])
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
-                    write_data(df_local, client, config.DOCUMENT_NAME, config.LOCAL_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
+                    write_data(df_local, client, constants.DOCUMENT_NAME, constants.LOCAL_WORKSHEET_NAME, write_mode, constants.WRITE_CSV)
                     sleep(10)
                     df_current = current_process(df_local)
                     write_mode: str = 'update'
-                    write_data(df_current, client, config.DOCUMENT_NAME, config.CURRENT_WORKSHEET_NAME, write_mode, config.WRITE_CSV)
+                    write_data(df_current, client, constants.DOCUMENT_NAME, constants.CURRENT_WORKSHEET_NAME, write_mode, constants.WRITE_CSV)
                 local_start: datetime = datetime.now()
-            if regional_et > config.REGIONAL_INTERVAL_DURATION:
-                for regional_key in config.REGIONAL_KEYS:
-                    df = get_data(regional_start, config.BBOX_DICT.get(regional_key)[0]) 
+            if regional_et > constants.REGIONAL_INTERVAL_DURATION:
+                for regional_key in constants.REGIONAL_KEYS:
+                    df = get_data(regional_start, constants.BBOX_DICT.get(regional_key)[0]) 
                     if len(df.index) > 0:
                         write_mode: str = 'append'
-                        write_data(df, client, config.DOCUMENT_NAME, config.BBOX_DICT.get(regional_key)[1], write_mode, config.WRITE_CSV)
+                        write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(regional_key)[1], write_mode, constants.WRITE_CSV)
                     sleep(10)
                 regional_start: datetime = datetime.now()
-            if process_et > config.PROCESS_INTERVAL_DURATION:
-                df = process_data(config.DOCUMENT_NAME, client)
+            if process_et > constants.PROCESS_INTERVAL_DURATION:
+                df = process_data(constants.DOCUMENT_NAME, client)
                 process_start: datetime = datetime.now()
                 if len(df.index) > 0:
-                    sensor_health(client, df, config.DOCUMENT_NAME, config.OUT_WORKSHEET_HEALTH_NAME)
-                    regional_stats(client, config.DOCUMENT_NAME)
+                    sensor_health(client, df, constants.DOCUMENT_NAME, constants.OUT_WORKSHEET_HEALTH_NAME)
+                    regional_stats(client, constants.DOCUMENT_NAME)
         except KeyboardInterrupt:
             sys.exit()
 
