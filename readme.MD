@@ -5,8 +5,9 @@
 ### Notes:
  
 - Rename config_template.py to config.py.
-- Edit config.py with your API keys, document names, file paths and preferences.
-- Edit config.py BBOX_DICT with your region abbreviations and coordinates. 
+- Edit config.py with your API keys and credentials
+- Edit constants.py document names, file paths and preferences.
+- Edit constants.py BBOX_DICT with your region abbreviations and coordinates. 
 - bbox finder is handy for getting rectangular coordinates: http://bboxfinder.com/#0.000000,0.000000,0.000000,0.000000 
 - Name the Google Sheets worksheet document with the name you provided for DOCUMENT_NAME in config.py 
 - Manually create empty Google Sheets sheets with names corresponding to regions.
