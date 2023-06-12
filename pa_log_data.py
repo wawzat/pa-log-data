@@ -46,6 +46,18 @@ client = gspread.authorize(creds)
 
 
 def status_update(local_et, regional_et, process_et):
+    """
+    A function that calculates the time remaining for each interval and prints it in a table format.
+
+    Args:
+        local_et (int): The elapsed time for the local interval in seconds.
+        regional_et (int): The elapsed time for the regional interval in seconds.
+        process_et (int): The elapsed time for the process interval in seconds.
+
+    Returns:
+        A datetime object representing the current time.
+    """
+
     local_minutes = int((config.LOCAL_INTERVAL_DURATION - local_et) / 60)
     local_seconds = int((config.LOCAL_INTERVAL_DURATION - local_et) % 60)
     regional_minutes = int((config.REGIONAL_INTERVAL_DURATION - regional_et) / 60)
@@ -63,6 +75,18 @@ def status_update(local_et, regional_et, process_et):
 
 
 def elapsed_time(local_start, regional_start, process_start, status_start):
+    """
+    Calculates the elapsed time for each interval since the start time.
+
+    Args:
+        local_start (datetime): The start time for the local interval.
+        regional_start (datetime): The start time for the regional interval.
+        process_start (datetime): The start time for the process interval.
+        status_start (datetime): The start time for the status interval.
+
+    Returns:
+        A tuple containing the elapsed time for each interval in seconds.
+    """
     local_et: int = (datetime.now() - local_start).total_seconds()
     regional_et: int = (datetime.now() - regional_start).total_seconds()
     process_et: int = (datetime.now() - process_start).total_seconds()
@@ -71,7 +95,17 @@ def elapsed_time(local_start, regional_start, process_start, status_start):
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    #Clean data when PM ATM 2.5 channels differ by 5 or 70%
+    """
+    Removes rows from the input DataFrame where the difference between the PM2.5 atmospheric concentration readings
+    from two sensors is either greater than or equal to 5 or greater than or equal to 70% of the average of the two readings.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame containing the PM2.5 atmospheric concentration readings from two sensors.
+
+    Returns:
+        A new DataFrame with the rows removed where the difference between the PM2.5 atmospheric concentration readings
+        from two sensors is either greater than or equal to 5 or greater than or equal to 70% of the average of the two readings.
+    """
     df = df.drop(df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) >= 5].index)
     df = df.drop(
         df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) /
@@ -82,6 +116,15 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def format_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Formats the input DataFrame by rounding the values in certain columns and converting the values in other columns to integers.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame to be formatted.
+
+    Returns:
+        A new DataFrame with the specified columns rounded or converted to integers.
+    """
     df[config.cols_4] = df[config.cols_4].round(2)
     df[config.cols_5] = df[config.cols_5].astype(int)
     df[config.cols_6] = df[config.cols_6].round(2)
@@ -106,8 +149,8 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         for the timestamp of the data, the index of the sensor, and various sensor measurements such as temperature,
         humidity, and PM2.5 readings.
     """
-    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
     et_since = int((datetime.now() - previous_time + timedelta(seconds=20)).total_seconds())
+    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
     params = {
         'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
                 "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
@@ -133,7 +176,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
         df = df.fillna('')
         df['time_stamp'] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
-        # convert the float values to strings
+        # convert the lat and lon values to strings
         df['latitude'] = df['latitude'].astype(str)
         df['longitude'] = df['longitude'].astype(str)
         df = df[cols]
@@ -180,10 +223,10 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
                 sleep(60)
             else:
                 logging.exception('gspread error in write_data() max attempts reached')  
-    # Write the data to Google Sheets 
+    # Write the data to local csv file 
     if WRITE_CSV is True:
         try:
-            df.to_csv(output_pathname, index=True, header=True)
+            df.to_csv(output_pathname, mode='a' index=True, header=True)
         except Exception as e:
             logging.exception('write_data() error writing csv')
 
@@ -266,6 +309,7 @@ def process_data(DOCUMENT_NAME, client):
                 else:
                     logging.exception('process_data() gspread error max attempts reached')
         if config.LOCAL_REGION == k:
+            # Save the dataframe for later use by the regional_stats() and sensor_health() functions
             df_local = df.copy()
         df['Ipm25'] = df.apply(
             lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
