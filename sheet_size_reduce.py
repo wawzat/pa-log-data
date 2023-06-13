@@ -55,6 +55,35 @@ def delete_rows(sheet, sheet_name, rows_to_delete, num_rows, first_date, last_da
     else:
         print('Rows to delete are not continuous, no data deleted.')
 
+
+# Custom argparse type representing a bounded int
+# Credit pallgeuer https://stackoverflow.com/questions/14117415/how-can-i-constrain-a-value-parsed-with-argparse-for-example-restrict-an-integ
+class IntRange:
+
+    def __init__(self, imin=None, imax=None):
+        self.imin = imin
+        self.imax = imax
+
+    def __call__(self, arg):
+        try:
+            value = int(arg)
+        except ValueError:
+            raise self.exception()
+        if (self.imin is not None and value < self.imin) or (self.imax is not None and value > self.imax):
+            raise self.exception()
+        return value
+
+    def exception(self):
+        if self.imin is not None and self.imax is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer in the range [{self.imin}, {self.imax}]")
+        elif self.imin is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer >= {self.imin}")
+        elif self.imax is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer <= {self.imax}")
+        else:
+            return argparse.ArgumentTypeError("Must be an integer")
+
+
 def get_arguments():
     parser = argparse.ArgumentParser(
     description='Reduce Google Sheets File Size.',
@@ -69,7 +98,7 @@ def get_arguments():
             -a, --all    Clean all sheets.
             -w, --warnings  Don't show warnings.        ''')
     g.add_argument('-m', '--month',
-                    type=int,
+                    type=IntRange(1, 12),
                     default=0,
                     dest='mnth',
                     help=argparse.SUPPRESS)
