@@ -15,8 +15,9 @@ Arguments:
     -x, --xl: Argument to copy all of the sheets to the all_data sheet and export to Excel. 
     -l, --list: Argument to list all of the sheets.
 """
-# James S. Lucas 20230612
+# James S. Lucas 20230613
 import os
+from datetime import datetime
 from time import sleep
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -28,6 +29,35 @@ from configparser import ConfigParser
 
 config = ConfigParser()
 config.read('config.ini')
+
+
+# Custom argparse type representing a bounded int
+# Credit pallgeuer https://stackoverflow.com/questions/14117415/how-can-i-constrain-a-value-parsed-with-argparse-for-example-restrict-an-integ
+class IntRange:
+
+    def __init__(self, imin=None, imax=None):
+        self.imin = imin
+        self.imax = imax
+
+    def __call__(self, arg):
+        try:
+            value = int(arg)
+        except ValueError:
+            raise self.exception()
+        if (self.imin is not None and value < self.imin) or (self.imax is not None and value > self.imax):
+            raise self.exception()
+        return value
+
+    def exception(self):
+        if self.imin is not None and self.imax is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer in the range [{self.imin}, {self.imax}]")
+        elif self.imin is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer >= {self.imin}")
+        elif self.imax is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer <= {self.imax}")
+        else:
+            return argparse.ArgumentTypeError("Must be an integer")
+
 
 def get_arguments():
     parser = argparse.ArgumentParser(
@@ -43,12 +73,12 @@ def get_arguments():
             -x, --xl  Argument to copy all of the sheets to the all_data sheet and export to Excel. 
             -l, --list  Argument to list all of the sheets.                                                      ''')
     g.add_argument('-m', '--month',
-                    type=int,
+                    type=IntRange(1, 12),
                     default=0,
                     dest='mnth',
                     help=argparse.SUPPRESS)
     g.add_argument('-y', '--year',
-                    type=int,
+                    type=IntRange(2015, datetime.now().year),
                     default=0,
                     dest='yr',
                     help=argparse.SUPPRESS)
