@@ -72,6 +72,34 @@ creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT
 client = gspread.authorize(creds)
 
 
+# Custom argparse type representing a bounded int
+# Credit pallgeuer https://stackoverflow.com/questions/14117415/how-can-i-constrain-a-value-parsed-with-argparse-for-example-restrict-an-integ
+class IntRange:
+
+    def __init__(self, imin=None, imax=None):
+        self.imin = imin
+        self.imax = imax
+
+    def __call__(self, arg):
+        try:
+            value = int(arg)
+        except ValueError:
+            raise self.exception()
+        if (self.imin is not None and value < self.imin) or (self.imax is not None and value > self.imax):
+            raise self.exception()
+        return value
+
+    def exception(self):
+        if self.imin is not None and self.imax is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer in the range [{self.imin}, {self.imax}]")
+        elif self.imin is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer >= {self.imin}")
+        elif self.imax is not None:
+            return argparse.ArgumentTypeError(f"Must be an integer <= {self.imax}")
+        else:
+            return argparse.ArgumentTypeError("Must be an integer")
+
+
 def get_arguments():
     parser = argparse.ArgumentParser(
     description='Get PurpleAir Sensor Historical Data.',
@@ -84,13 +112,13 @@ def get_arguments():
             -y, --year   The year to get data for.
             -s, --sensor  Optional. The name of a sensor to get data for.                           ''')
     g.add_argument('-m', '--month',
-                    type=int,
+                    type=IntRange(1, 12),
                     default=1,
                     dest='mnth',
                     help=argparse.SUPPRESS)
     g.add_argument('-y', '--year',
-                    type=int,
-                    default=2023,
+                    type=IntRange(2015, datetime.now().year),
+                    default=datetime.now().year,
                     dest='yr',
                     help=argparse.SUPPRESS)
     g.add_argument('-s', '--sensor',
