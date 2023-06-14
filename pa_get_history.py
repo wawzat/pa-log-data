@@ -53,6 +53,10 @@ session = requests.Session()
 retry = Retry(connect=5, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
 PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
+if PURPLEAIR_READ_KEY == '':
+    logging.error('Error: PurpleAir API read key not set in config.ini. Exiting.')
+    print('Error: PurpleAir API read key not set in config.ini. Exiting.')
+    sys.exit(1)
 session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
@@ -68,6 +72,10 @@ scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
                     ]
 GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
+if GSPREAD_SERVICE_ACCOUNT_JSON_PATH == '':
+    logging.error('Error: Google Sheets service account JSON path is not set in config.ini. Exiting.')
+    print('Google Sheets service account JSON path is not set in config.ini. Exiting.')
+    sys.exit(1)
 creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
@@ -251,6 +259,10 @@ def write_data(df, client, DOCUMENT_NAME, k, WRITE_CSV=False):
             client.create(DOCUMENT_NAME)
             spreadsheet = client.open(DOCUMENT_NAME)
             google_account = config.get('google', 'google_account')
+            if google_account == '':
+                logging.error('Error: Google account not set in config.ini, exiting...')
+                print('Error: Google account not set in config.ini, exiting...')
+                sys.exit(1)
             spreadsheet.share(google_account, perm_type='user', role='writer')
         try:
             sheet = spreadsheet.worksheet(worksheet_name)

@@ -49,6 +49,9 @@ scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive'
         ]
 GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
+if GSPREAD_SERVICE_ACCOUNT_JSON_PATH == '':
+    print('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH is not set in config.ini, exiting...')
+    exit(1)
 creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 
