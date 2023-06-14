@@ -73,10 +73,16 @@ class AQI:
 class EPA:
     @staticmethod
     def calculate(RH, PM, *args):
+        if PM < 0:
+            PM = 0
+        if RH < 0:
+            RH = 0
         # Calculate average of the arguments
         total = PM
         count = 1
         for arg in args:
+            if arg < 0:
+                arg = 0
             total += arg
             count += 1
         PM2_5 = total / count
