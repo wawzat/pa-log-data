@@ -61,17 +61,17 @@ class IntRange:
 
 def get_arguments():
     parser = argparse.ArgumentParser(
-    description='List and optionally condoiddate sheets from Google Sheets ServiceAccount to Excel.',
+    description='List, consolidate and export from Google Sheets ServiceAccount.',
     prog='gsheets_to_xl.py',
     usage='%(prog)s [-m <month>] [-y <year>] [-c <consolidate>] [-x <xl>] [-l <list>]',
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''    -m, --month  Integer of the month of the sheet to copy.
-            -y, --year   Year of the sheet to copy.
-            -c, --consolidate Argument to consolidate all of the sheets to the all_data sheet.
-            -x, --xl  Argument to copy all of the sheets to the all_data sheet and export to Excel. 
-            -l, --list  Argument to list all of the sheets.                                                      ''')
+            description='''    -m, --month  Optional. Month of the sheet to process. Process all sheets in the service account if omitted.
+            -y, --year  Optional. Year of the sheet to process. Process all sheets in the service account if omitted.
+            -c, --Consolidate  Optional. Consolidate all of the sheets to an new "all_data" sheet.
+            -x, --xl  Optional. Consolidate all of the sheets to a new "all_data" sheet and then export to Excel. 
+            -l, --list  Optional. List all of the sheets only.                                                      ''')
     g.add_argument('-m', '--month',
                     type=IntRange(1, 12),
                     default=0,
@@ -260,7 +260,7 @@ def main():
     args = get_arguments()
     spreadsheets = client.list_spreadsheet_files()
     if args.list_sheets is True:
-        if args.mnth == 0 and args.yr == 0:
+        if args.mnth == 0 or args.yr == 0:
             list_sheets(spreadsheets)
         elif args.mnth != 0 and args.yr != 0:
             sheet_name = f'pa_history_{args.yr}_{str(args.mnth)}'
@@ -270,7 +270,7 @@ def main():
             else:
                 print(f'Sheet name: {sheet_name} not found.')
     if args.consolidate is True or args.xl is True:
-        if args.mnth == 0 and args.yr == 0:
+        if args.mnth == 0 or args.yr == 0:
             for spreadsheet in spreadsheets:
                 if 'history' in spreadsheet['name']:
                     consolidate_sheets(args, spreadsheet)
