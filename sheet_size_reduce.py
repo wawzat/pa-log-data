@@ -86,20 +86,20 @@ class IntRange:
 
 def get_arguments():
     parser = argparse.ArgumentParser(
-    description='Reduce Google Sheets File Size.',
+    description='Reduce Google Sheets file size.',
     prog='sheet_size_reduce.py',
     usage='%(prog)s [-m <month>] [-d <days>] [-s <sheet>] [-a] [-w]',
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''    -m, --month  The number of the month to clean.
-            -d, --days   The number of days to keep.
-            -s, --sheet  The name of the sheet to clean.
-            -a, --all    Clean all sheets.
-            -w, --warnings  Don't show warnings.        ''')
+            description='''    -m, --month  Optional. The month to clean. Default is current month.
+            -d, --days      Optional. The number of days to keep. Default is 21.
+            -s, --sheet     Optional. The name of the sheet to clean. Default is constants.py LOCAL_WORKSHEET_NAME.
+            -a, --all       Optional. Clean all sheets (local and regional).
+            -w, --warnings  Optional. Don't show warnings.        ''')
     g.add_argument('-m', '--month',
                     type=IntRange(1, 12),
-                    default=0,
+                    default=datetime.now().month,
                     dest='mnth',
                     help=argparse.SUPPRESS)
     g.add_argument('-d', '--days',
@@ -109,7 +109,7 @@ def get_arguments():
                     help=argparse.SUPPRESS)
     g.add_argument('-s', '--sheet',
                     type=str,
-                    default='TV',
+                    default=constants.LOCAL_WORKSHEET_NAME,
                     dest='sheet_name',
                     help=argparse.SUPPRESS)
     g.add_argument('-a', '--all', action='store_true',
@@ -131,12 +131,8 @@ else:
 
 # Define the current month and year
 now = datetime.now()
-if args.mnth == 0:
-    month_to_clean = now.month
-    year_to_clean = now.year
-else:
-    month_to_clean = args.mnth
-    year_to_clean = now.year
+month_to_clean = args.mnth
+year_to_clean = now.year
 
 
 for index, sheet_name in enumerate(sheets):
