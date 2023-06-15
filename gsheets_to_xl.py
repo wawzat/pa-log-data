@@ -67,11 +67,12 @@ def get_arguments():
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''    -m, --month  Optional. Month of the sheet to process. Process all sheets in the service account if omitted.
-            -y, --year  Optional. Year of the sheet to process. Process all sheets in the service account if omitted.
-            -c, --Consolidate  Optional. Consolidate all of the sheets to an new "all_data" sheet.
-            -x, --xl  Optional. Consolidate all of the sheets to a new "all_data" sheet and then export to Excel. 
-            -l, --list  Optional. List all of the sheets only.                                                      ''')
+            description='''            
+            -m, --month        Optional. Month of the sheet to process. Process all sheets in the service account if omitted.
+            -y, --year         Optional. Year of the sheet to process. Process all sheets in the service account if omitted.
+            -c, --Consolidate  Optional. Consolidate all of the sheets to a new "all_data" sheet.
+            -x, --xl           Optional. Consolidate all of the sheets to a new "all_data" sheet and then export to Excel. 
+            -l, --list         Optional. List the sheets only.                                                      ''')
     g.add_argument('-m', '--month',
                     type=IntRange(1, 12),
                     default=0,
