@@ -28,13 +28,13 @@ config.read('config.ini')
 
 def get_arguments():
     parser = argparse.ArgumentParser(
-    description='List and optionally delete files from Google Sheets ServiceAccount.',
+    description='List and optionally delete files from the Google Sheets ServiceAccount.',
     prog='gsheets_mgmt.py',
     usage='%(prog)s [-d <delete>]',
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''    -d, --delete  Use this argument to delete files.      ''')
+            description='''    -d, --delete  Delete the Google Sheets workbooks from the Service Account.      ''')
     g.add_argument('-d', '--delete', action='store_true',
                     dest='delete',
                     help=argparse.SUPPRESS)
