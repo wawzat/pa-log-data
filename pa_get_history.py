@@ -116,12 +116,12 @@ def get_arguments():
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''    -m, --month  Integer of the month to get data for.
-            -y, --year   The year to get data for.
-            -s, --sensor  Optional. The name of a sensor to get data for.                           ''')
+            description='''    -m, --month  Integer of the month to get data for. If not provided, current month will be used.
+            -y, --year   The year to get data for. If not provided, current year will be used.
+            -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.              ''')
     g.add_argument('-m', '--month',
                     type=IntRange(1, 12),
-                    default=1,
+                    default=datetime.now().month,
                     dest='mnth',
                     help=argparse.SUPPRESS)
     g.add_argument('-y', '--year',
