@@ -184,6 +184,9 @@ for index, sheet_name in enumerate(sheets):
             if timestamp.month < month_to_clean or timestamp.year < year_to_clean:
                 # Add the row number to the list of rows to delete
                 rows_to_delete.append(i+2)
+            else:
+                # Update last_date if the row is within the keep_days threshold
+                last_date = datetime.strptime(rows[i]['time_stamp'], '%m/%d/%Y %H:%M:%S')
         else:
             # Stop looping once we reach the first row within the keep_days threshold
             break
