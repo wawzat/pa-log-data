@@ -90,6 +90,7 @@ class EPA:
             # If either PM2_5 or RH is a string, the EPA conversion value will be set to 0.
             if any(isinstance(x, str) for x in (PM2_5, RH)):
                 PM2_5_epa = 0
+                RH = 0
             elif PM2_5 <= 343:
                 PM2_5_epa = round((0.52 * PM2_5 - 0.086 * RH + 5.75), 3)
             elif PM2_5 > 343:
