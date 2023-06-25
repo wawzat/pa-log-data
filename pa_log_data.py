@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230624
+# James S. Lucas - 20230625
 
 import sys
 import requests
@@ -332,7 +332,7 @@ def process_data(DOCUMENT_NAME, client):
             axis=1
             )
         df['pm25_epa'] = df.apply(
-                    lambda x: EPA.calculate(int(x['humidity']), x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
+                    lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
                     axis=1
                     )
         df['time_stamp'] = pd.to_datetime(
