@@ -271,7 +271,7 @@ def current_process(df):
         axis=1
         )
     df['pm25_epa'] = df.apply(
-                lambda x: EPA.calculate(int(x['humidity']), x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
+                lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
                 axis=1
                 )
     df['time_stamp'] = pd.to_datetime(
