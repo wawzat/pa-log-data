@@ -73,6 +73,10 @@ class AQI:
 class EPA:
     @staticmethod
     def calculate(RH, PM, *args):
+        # If either PM2_5 or RH is a string, the EPA conversion value will be set to 0.
+        if any(isinstance(x, str) for x in (RH, PM)):
+            PM = 0
+            RH = 0
         if PM < 0:
             PM = 0
         if RH < 0:
@@ -83,15 +87,14 @@ class EPA:
         for arg in args:
             if arg < 0:
                 arg = 0
-            total += arg
-            count += 1
+            elif isinstance(arg, str):
+                arg = 0
+            else:
+                total += arg
+                count += 1
         PM2_5 = total / count
         try: 
-            # If either PM2_5 or RH is a string, the EPA conversion value will be set to 0.
-            if any(isinstance(x, str) for x in (PM2_5, RH)):
-                PM2_5_epa = 0
-                RH = 0
-            elif PM2_5 <= 343:
+            if PM2_5 <= 343:
                 PM2_5_epa = round((0.52 * PM2_5 - 0.086 * RH + 5.75), 3)
             elif PM2_5 > 343:
                 PM2_5_epa = round((0.46 * PM2_5 + 3.93 * 10 ** -4 * PM2_5 ** 2 + 2.97), 3)
