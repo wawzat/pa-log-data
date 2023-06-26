@@ -26,17 +26,32 @@ from configparser import ConfigParser
 config = ConfigParser()
 config.read('config.ini')
 
+
+# Gets or creates a logger
+logger = logging.getLogger(__name__)  
+
+# set log level
+logger.setLevel(logging.WARNING)
+
+# define file handler and set formatter
+file_handler = logging.FileHandler('pa_log_data_error.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+
+# add file handler to logger
+logger.addHandler(file_handler)
+
 # Setup exception logging
-format_string = '%(name)s - %(asctime)s : %(message)s'
-logging.basicConfig(filename='error.log',
-                    format = format_string)
+#format_string = '%(name)s - %(asctime)s : %(message)s'
+#logging.basicConfig(filename='error.log',
+#                    format = format_string)
 
 session = requests.Session()
 retry = Retry(connect=5, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
 PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
 if PURPLEAIR_READ_KEY == '':
-    logging.error('Error: PURPLEAIR_READ_KEY not set in config.ini')
+    logger.error('Error: PURPLEAIR_READ_KEY not set in config.ini')
     print('ERROR: PURPLEAIR_READ_KEY not set in config.ini')
     sys.exit(1)
 session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
@@ -54,7 +69,7 @@ scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     ]
 GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
 if GSPREAD_SERVICE_ACCOUNT_JSON_PATH == '':
-    logging.error('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH not set in config.ini, exiting...')
+    logger.error('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH not set in config.ini, exiting...')
     print('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH not set in config.ini, exiting...')
     sys.exit(1)
 creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
@@ -183,7 +198,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     try:
         response = session.get(url)
     except Exception as e:
-        logging.exception('get_data error')
+        logger.exception('get_data error')
         df = pd.DataFrame()
         return df
     if response.ok:
@@ -198,7 +213,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         df = df[cols]
     else:
         df = pd.DataFrame()
-        logging.exception('get_data() response not ok')
+        logger.exception('get_data() response not ok')
     return df
 
 
@@ -233,18 +248,18 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
                 sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
             break
         except gspread.exceptions.APIError as e:
-            logging.exception('gspread error in write_data()')
+            logger.exception('gspread error in write_data()')
             attempts += 1
             if attempts < MAX_ATTEMPTS:
                 sleep(60)
             else:
-                logging.exception('gspread error in write_data() max attempts reached')  
+                logger.exception('gspread error in write_data() max attempts reached')  
     # Write the data to local csv file 
     if WRITE_CSV is True:
         try:
             df.to_csv(output_pathname, mode='a', index=True, header=True)
         except Exception as e:
-            logging.exception('write_data() error writing csv')
+            logger.exception('write_data() error writing csv')
 
 
 def current_process(df):
@@ -319,11 +334,11 @@ def process_data(DOCUMENT_NAME, client):
             except gspread.exceptions.APIError as e:
                 attempts += 1
                 message = f'process_data() gspread error attempt #{attempts}'
-                logging.exception(message)
+                logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
                     sleep(90)
                 else:
-                    logging.exception('process_data() gspread error max attempts reached')
+                    logger.exception('process_data() gspread error max attempts reached')
         if constants.LOCAL_REGION == k:
             # Save the dataframe for later use by the regional_stats() and sensor_health() functions
             df_local = df.copy()
@@ -433,19 +448,19 @@ def regional_stats(client, DOCUMENT_NAME):
             except gspread.exceptions.APIError as e:
                 attempts += 1
                 message = f'regional_stats() gspread error attempt #{attempts}'
-                logging.exception(message)
+                logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
                     sleep(90)
                 else:
-                    logging.exception('regional_stats() gspread error max attempts reached')
+                    logger.exception('regional_stats() gspread error max attempts reached')
             except requests.exceptions.ConnectionError as e:
                 attempts += 1
                 message = f'regional_stats() requests error attempt #{attempts}'
-                logging.exception(message)
+                logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
                     sleep(90)
                 else:
-                    logging.exception('regional_stats() requests error max attempts reached')
+                    logger.exception('regional_stats() requests error max attempts reached')
         if len(data) > 0:
             data_list.append(data) 
             df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
