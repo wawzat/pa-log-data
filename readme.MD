@@ -39,7 +39,6 @@
 - PurpleAir API keys may be obtained from PurpleAir. https://community.purpleair.com/t/creating-api-keys/3951 
 - Sensor data are gathered for a "local" region and other regions as defined in constants.py.
 - Sensor Confidence is calculated as the percentage of data discarded after cleaning with EPA criteria and may not match displayed PurpleAir Confidence percentages.
-- The WRITE_CSV parameter is primarily used for testing purposes.
 - requirements.txt is included for installing the required non-standard Python libraries (i.e., pip: -r requirements.txt)
 - To prevent the Google Sheets document from becoming too large you should periodically archive data to another worksheet and delete data from the master document.
 - You can use the Google Sheets worksheet as source data for a Google Looker Studio dashboard. https://lookerstudio.google.com/ 
@@ -59,7 +58,7 @@
   
 # pa_get_history.py
   
-## Python program to get PurpleAir historical sensor data and save to Google Sheets.
+## Python program to get PurpleAir historical sensor data and save to Google Sheets, CSV or both.
   
 ### Notes:
   
