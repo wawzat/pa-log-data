@@ -13,12 +13,13 @@ The program can be run from the command line with the following arguments:
     -m, --month: Integer of the month to get data for.
     -y, --year: The year to get data for.
     -s, --sensor: Optional. The name of a sensor to get data for.
+    -o, --output: Optional. The output format. If not provided, output will be written to a CSV file.
 
 The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20230612
+# James S. Lucas - 20230627
 
 import sys
 import requests
@@ -60,12 +61,7 @@ if PURPLEAIR_READ_KEY == '':
 session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
-file_name: str = 'pa_log_test.csv'
-if sys.platform == 'win32':
-    output_pathname = Path(constants.MATRIX5, file_name)
-elif sys.platform == 'linux':
-    cwd: str = Path.cwd()
-    output_pathname: str = Path(cwd, file_name)
+
 
 # set the credentials for the Google Sheets service account
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
@@ -112,13 +108,21 @@ def get_arguments():
     parser = argparse.ArgumentParser(
     description='Get PurpleAir Sensor Historical Data.',
     prog='pa_get_history.py',
-    usage='%(prog)s [-m <month>] [-y <year>] [-s <sensor>]',
+    usage='%(prog)s [-m <month>] [-y <year>] [-s <sensor>] [-o <output>]',
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
             description='''    -m, --month  Optional. The month to get data for. If not provided, current month will be used.
             -y, --year    Optional. The year to get data for. If not provided, current year will be used.
-            -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.              ''')
+            -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.
+            -o, --output  Optional. Output format. If not provided, output will be written to a CSV file.              ''')
+    g.add_argument('-o', '--output',
+                    type=str,
+                    default='c',
+                    choices = ['c', 's', 'b'],
+                    metavar='',
+                    dest='output',
+                    help=argparse.SUPPRESS)
     g.add_argument('-m', '--month',
                     type=IntRange(1, 12),
                     default=datetime.now().month,
@@ -227,7 +231,7 @@ def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
     return df
 
 
-def write_data(df, client, DOCUMENT_NAME, k, WRITE_CSV=False):
+def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
 
@@ -246,53 +250,63 @@ def write_data(df, client, DOCUMENT_NAME, k, WRITE_CSV=False):
         None
     """
 
-    MAX_ATTEMPTS: int = 3
-    attempts: int = 0
-    while attempts < MAX_ATTEMPTS:
-        worksheet_name = k
+    if output == 's' or output == 'b':
+        MAX_ATTEMPTS: int = 4
+        attempts: int = 0
+        SLEEP_DURATION = 90
+        while attempts < MAX_ATTEMPTS:
+            worksheet_name = k
+            try:
+                # open the Google Sheets output worksheet and write the data
+                spreadsheet = client.open(DOCUMENT_NAME)
+            except gspread.exceptions.SpreadsheetNotFound as e:
+                message = f'Creatimg Google Spreadsheet "{DOCUMENT_NAME}"'
+                print(message)
+                client.create(DOCUMENT_NAME)
+                spreadsheet = client.open(DOCUMENT_NAME)
+                google_account = config.get('google', 'google_account')
+                if google_account == '':
+                    logging.error('Error: Google account not set in config.ini, exiting...')
+                    print('Error: Google account not set in config.ini, exiting...')
+                    sys.exit(1)
+                spreadsheet.share(google_account, perm_type='user', role='writer')
+            try:
+                sheet = spreadsheet.worksheet(worksheet_name)
+                sheet.clear()
+                sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
+                message = f'Writing data to Sheet {worksheet_name} in Google Workbook {DOCUMENT_NAME}'
+                print(message)
+                break
+            except gspread.exceptions.WorksheetNotFound as e:
+                message = f'Creating Google Sheet "{worksheet_name}"'
+                print(message)
+                print()
+                spreadsheet = client.open(DOCUMENT_NAME)
+                sheet = spreadsheet.add_worksheet(title=worksheet_name, rows=100, cols=31)
+                sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
+                break
+            except gspread.exceptions.APIError as e:
+                logging.exception('gspread error in write_data()')
+                attempts += 1
+                if attempts < MAX_ATTEMPTS:
+                    sleep(SLEEP_DURATION)
+                    SLEEP_DURATION += 90
+                else:
+                    logging.exception('gspread error in write_data() max attempts reached')
         try:
-            # open the Google Sheets output worksheet and write the data
-            spreadsheet = client.open(DOCUMENT_NAME)
-        except gspread.exceptions.SpreadsheetNotFound as e:
-            message = f'Creatimg Google Spreadsheet "{DOCUMENT_NAME}"'
-            print(message)
-            client.create(DOCUMENT_NAME)
-            spreadsheet = client.open(DOCUMENT_NAME)
-            google_account = config.get('google', 'google_account')
-            if google_account == '':
-                logging.error('Error: Google account not set in config.ini, exiting...')
-                print('Error: Google account not set in config.ini, exiting...')
-                sys.exit(1)
-            spreadsheet.share(google_account, perm_type='user', role='writer')
-        try:
-            sheet = spreadsheet.worksheet(worksheet_name)
-            sheet.clear()
-            sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
-            break
+            sheet = spreadsheet.worksheet('Sheet1')
+            spreadsheet.del_worksheet(sheet)
         except gspread.exceptions.WorksheetNotFound as e:
-            message = f'Creating Google Sheet "{worksheet_name}"'
-            print(message)
-            print()
-            spreadsheet = client.open(DOCUMENT_NAME)
-            sheet = spreadsheet.add_worksheet(title=worksheet_name, rows=100, cols=31)
-            sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
-            break
-        except gspread.exceptions.APIError as e:
-            logging.exception('gspread error in write_data()')
-            attempts += 1
-            if attempts < MAX_ATTEMPTS:
-                sleep(60)
-            else:
-                logging.exception('gspread error in write_data() max attempts reached')
-    try:
-        sheet = spreadsheet.worksheet('Sheet1')
-        spreadsheet.del_worksheet(sheet)
-    except gspread.exceptions.WorksheetNotFound as e:
-        pass
-    # Write the data to Google Sheets 
-    if WRITE_CSV is True:
+            pass
+    if output == 'c' or output == 'b':
+        if sys.platform == 'win32':
+            output_pathname = Path(constants.MATRIX5) / csv_file_name
+        elif sys.platform == 'linux':
+            output_pathname = Path.cwd() / csv_file_name
         try:
-            df.to_csv(output_pathname, index=True, header=True)
+            df.to_csv(output_pathname, index=False, header=True)
+            message = f'Created {csv_file_name} in {output_pathname.parent}'
+            print(message)
         except Exception as e:
             logging.exception('write_data() error writing csv')
 
@@ -312,7 +326,8 @@ def main():
             exit()
         if len(df.index) > 0:
             DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, constants.WRITE_CSV)
+            csv_file_name = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}.csv'
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, csv_file_name)
     else:
         loop_num = 0
         for k, v in constants.sensors_current.items():
@@ -324,7 +339,8 @@ def main():
             print()
             if len(df.index) > 0:
                 DOCUMENT_NAME = f'pa_history_{yr}_{mnth}'
-                write_data(df, client, DOCUMENT_NAME, k, constants.WRITE_CSV)
+                csv_file_name = f'pa_history_{yr}_{mnth}.csv'
+                write_data(df, client, DOCUMENT_NAME, k, args.output, csv_file_name)
             sleep(60)
             end_time = datetime.now()
             time_per_loop = (end_time - start_time) / loop_num
