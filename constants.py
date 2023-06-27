@@ -1,5 +1,5 @@
-#user_directory = r' '
-MATRIX5 = r'd:\Users\wawza\OneDrive\Documents\House\PurpleAir'
+#user_directory = ' '
+MATRIX5 = 'd:/Users/wawza/OneDrive/Documents/House/PurpleAir'
 
 LOCAL_REGION = 'TV'
 #           SW lon / lat            NE lon / lat
@@ -17,7 +17,6 @@ REGIONAL_INTERVAL_DURATION: int = 3900
 PROCESS_INTERVAL_DURATION: int = 10000
 
 PROCESS_RESAMPLE_RULE: str = '2H'
-WRITE_CSV: bool = False
 
 # set the name of the Google Sheets document
 DOCUMENT_NAME: str = 'pa_data'
