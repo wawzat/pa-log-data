@@ -235,8 +235,9 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
     Returns:
         None
     """
-    MAX_ATTEMPTS: int = 3
+    MAX_ATTEMPTS: int = 4
     attempts: int = 0
+    SLEEP_DURATUION: int = 90
     while attempts < MAX_ATTEMPTS:
         try:
             # open the Google Sheets output worksheet and write the data
@@ -251,7 +252,8 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
             logger.exception('gspread error in write_data()')
             attempts += 1
             if attempts < MAX_ATTEMPTS:
-                sleep(60)
+                sleep(SLEEP_DURATUION)
+                SLEEP_DURATUION += 90
             else:
                 logger.exception('gspread error in write_data() max attempts reached')  
     # Write the data to local csv file 
@@ -324,8 +326,9 @@ def process_data(DOCUMENT_NAME, client):
         # open the Google Sheets input worksheet and read in the data
         in_worksheet_name: str = k
         out_worksheet_name: str = k + ' Proc'
-        MAX_ATTEMPTS: int = 3
+        MAX_ATTEMPTS: int = 4
         attempts: int = 0
+        SLEEP_DURATION: int = 90
         while attempts < MAX_ATTEMPTS:
             try:
                 in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
@@ -336,7 +339,8 @@ def process_data(DOCUMENT_NAME, client):
                 message = f'process_data() gspread error attempt #{attempts}'
                 logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
-                    sleep(90)
+                    sleep(SLEEP_DURATION)
+                    SLEEP_DURATION += 90
                 else:
                     logger.exception('process_data() gspread error max attempts reached')
         if constants.LOCAL_REGION == k:
@@ -435,8 +439,9 @@ def regional_stats(client, DOCUMENT_NAME):
     write_mode: str = 'update'
     out_worksheet_regional_name: str = 'Regional'
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
-    MAX_ATTEMPTS: int = 3
+    MAX_ATTEMPTS: int = 4
     attempts: int = 0
+    SLEEP_DURATION: int = 90
     for k, v in constants.BBOX_DICT.items():
         worksheet_name = v[1] + ' Proc'
         while attempts < MAX_ATTEMPTS:
@@ -450,7 +455,8 @@ def regional_stats(client, DOCUMENT_NAME):
                 message = f'regional_stats() gspread error attempt #{attempts}'
                 logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
-                    sleep(90)
+                    sleep(SLEEP_DURATION)
+                    SLEEP_DURATION += 90
                 else:
                     logger.exception('regional_stats() gspread error max attempts reached')
             except requests.exceptions.ConnectionError as e:
@@ -458,7 +464,8 @@ def regional_stats(client, DOCUMENT_NAME):
                 message = f'regional_stats() requests error attempt #{attempts}'
                 logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
-                    sleep(90)
+                    sleep(SLEEP_DURATION)
+                    SLEEP_DURATION += 90
                 else:
                     logger.exception('regional_stats() requests error max attempts reached')
         if len(data) > 0:
