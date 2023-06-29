@@ -58,7 +58,7 @@
   
 # pa_get_history.py
   
-## Python program to get PurpleAir historical sensor data and save to Google Sheets, CSV or both.
+## Python program to get PurpleAir historical sensor data and save to Google Sheets, CSV, Excel or all three.
   
 ### Notes:
   
