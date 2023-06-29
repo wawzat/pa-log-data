@@ -115,12 +115,12 @@ def get_arguments():
             description='''            -m, --month   Optional. The month to get data for. If not provided, current month will be used.
             -y, --year    Optional. The year to get data for. If not provided, current year will be used.
             -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.
-            -o, --output  Optional. Output format. If not provided, output will be written to a CSV file.  
-            -a, --average Optional. Number of minutes to average. If not provided, 30 minutes will be used.            ''')
+            -o, --output  Optional. Output format. If not provided, output will be written to a CSV file. Choices = c, s, x, a 
+            -a, --average Optional. Number of minutes to average. If not provided, 30 minutes will be used. Choices = 0, 10, 30, 60, 360, 1440     ''')
     g.add_argument('-o', '--output',
                     type=str,
                     default='c',
-                    choices = ['c', 's', 'b'],
+                    choices = ['c', 's', 'x', 'a'],
                     metavar='',
                     dest='output',
                     help=argparse.SUPPRESS)
@@ -142,7 +142,7 @@ def get_arguments():
     g.add_argument('-a', '--average',
                     type=int,
                     default=30,
-                    choices = [2, 10, 30, 60],
+                    choices = [0, 10, 30, 60, 360, 1440],
                     metavar='',
                     dest='average',
                     help=argparse.SUPPRESS)
@@ -151,7 +151,49 @@ def get_arguments():
     return(args)
 
 
-def get_data(sensor_id, yr, mnth, average) -> pd.DataFrame:
+def format_spreadsheet(writer):
+    # Set the column formats and widths
+    workbook = writer.book
+    worksheet = writer.sheets['Sheet1']
+    format1 = workbook.add_format({'num_format': 'm-d-Y h:mm:ss'})
+    format2 = workbook.add_format({'num_format': '#,##0.00'})
+    format3 = workbook.add_format({'num_format': '#,##0.000'})
+    format4 = workbook.add_format({'num_format': '#,##0.0000'})
+    format5 = workbook.add_format({'num_format': '#,##0'})
+    worksheet.set_column('A:A', 19, format1)
+    worksheet.set_column('B:B', 19, format1)
+    worksheet.set_column('C:C', 13, format5)
+    worksheet.set_column('D:D', 27, format5)
+    worksheet.set_column('E:E', 4, format5)
+    worksheet.set_column('F:F', 9, format5)
+    worksheet.set_column('G:G', 9, format3)
+    worksheet.set_column('H:H', 12, format3)
+    worksheet.set_column('I:I', 10, format3)
+    worksheet.set_column('J:J', 6, format2)
+    worksheet.set_column('K:K', 13, format3)
+    worksheet.set_column('L:L', 13, format3)
+    worksheet.set_column('M:M', 13, format3)
+    worksheet.set_column('N:N', 13, format3)
+    worksheet.set_column('O:O', 14, format3)
+    worksheet.set_column('P:P', 14, format3)
+    worksheet.set_column('Q:Q', 13, format3)
+    worksheet.set_column('R:R', 13, format3)
+    worksheet.set_column('S:S', 13, format3)
+    worksheet.set_column('T:T', 13, format3)
+    worksheet.set_column('U:U', 14, format3)
+    worksheet.set_column('V:V', 14, format3)
+    worksheet.set_column('W:W', 13, format4)
+    worksheet.set_column('X:X', 13, format4)
+    worksheet.set_column('Y:Y', 13, format4)
+    worksheet.set_column('Z:Z', 13, format4)
+    worksheet.set_column('AA:AA', 13, format4)
+    worksheet.set_column('AB:AB', 14, format4)
+    worksheet.set_column('AC:AC', 10, format3)
+    worksheet.set_column('AD:AD', 6, format5)
+    worksheet.freeze_panes(1, 0)
+
+
+def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
     """
     A function that queries the PurpleAir API for sensor data for a given sensor_id.
 
@@ -164,11 +206,14 @@ def get_data(sensor_id, yr, mnth, average) -> pd.DataFrame:
         humidity, and PM2.5 readings.
     """
     last_day_of_month = calendar.monthrange(yr, mnth)[1]
+    # minutes: days
     average_limits = {
-        2: 2,
+        0: 2,
         10: 3,
         30: 7,
-        60: 14
+        60: 14,
+        360: 90,
+        1440: 365
     }
     root_url: str = 'https://api.purpleair.com/v1/sensors/{ID}/history?start_timestamp={start_timestamp}&end_timestamp={end_timestamp}&average={average}&fields={fields}'
     df_list = []  # List to store dataframes
@@ -198,7 +243,7 @@ def get_data(sensor_id, yr, mnth, average) -> pd.DataFrame:
             'end_timestamp': end_timestamp
         }
         url: str = root_url.format(**params)
-        cols: List[str] = ['time_stamp', 'time_stamp_pacific'] + [col for col in params['fields'].split(',')] + ['pm25_epa'] + ['Ipm25']
+        cols: List[str] = ['time_stamp', 'time_stamp_pacific', 'sensor_index', 'name'] + [col for col in params['fields'].split(',')] + ['pm25_epa'] + ['Ipm25']
         try:
             response = session.get(url)
         except Exception as e:
@@ -214,6 +259,8 @@ def get_data(sensor_id, yr, mnth, average) -> pd.DataFrame:
                 return pd.DataFrame()
             else:
                 df_temp = df_temp.fillna('')
+                df_temp['sensor_index'] = sensor_id
+                df_temp['name'] = sensor_name
                 df_temp['time_stamp'] = pd.to_datetime(df_temp['time_stamp'], unit='s')
                 df_temp['time_stamp_pacific'] = df_temp['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
                 df_temp['time_stamp'] = df_temp['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
@@ -235,10 +282,14 @@ def get_data(sensor_id, yr, mnth, average) -> pd.DataFrame:
             df = pd.concat(df_list, ignore_index=True)  # Concatenate dataframes
             df = df[cols]  # Reorder columns
             df = df.sort_values('time_stamp')  # Sort by time_stamp
+        else:
+            df = pd.DataFrame()
+            logging.exception('get_data() df_list empty')
+            print('df_list empty')
     return df
 
 
-def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name):
+def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name, xl_file_name):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
 
@@ -257,7 +308,7 @@ def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name):
         None
     """
 
-    if output == 's' or output == 'b':
+    if output == 's' or output == 'a':
         MAX_ATTEMPTS: int = 4
         attempts: int = 0
         SLEEP_DURATION = 90
@@ -305,7 +356,7 @@ def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name):
             spreadsheet.del_worksheet(sheet)
         except gspread.exceptions.WorksheetNotFound as e:
             pass
-    if output == 'c' or output == 'b':
+    if output == 'c' or output == 'a':
         if sys.platform == 'win32':
             output_pathname = Path(constants.MATRIX5) / csv_file_name
         elif sys.platform == 'linux':
@@ -315,7 +366,24 @@ def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name):
             message = f'Created {csv_file_name} in {output_pathname.parent}'
             print(message)
         except Exception as e:
-            logging.exception('write_data() error writing csv')
+            logging.exception('write_data() error writing Excel file')
+    if output == 'x' or output == 'a':
+        if sys.platform == 'win32':
+            output_pathname = Path(constants.MATRIX5) / xl_file_name
+        elif sys.platform == 'linux':
+            output_pathname = Path.cwd() / xl_file_name
+        try:
+            with pd.ExcelWriter(output_pathname,
+                                engine='xlsxwriter',
+                                engine_kwargs={'options': {'strings_to_numbers': True}}
+                                ) as writer:
+                # Export the DataFrame to Excel
+                df.to_excel(writer, sheet_name='Sheet1', index=False)
+                format_spreadsheet(writer)
+            message = f'Created {xl_file_name} in {output_pathname.parent}'
+            print(message)
+        except Exception as e:
+            logging.exception('write_data() error writing Excel file')
 
 
 def main():
@@ -323,7 +391,7 @@ def main():
     start_time = datetime.now()
     if args.sensor_name is not None:
         try:
-            df = get_data(constants.sensors_current[args.sensor_name]['ID'], args.yr, args.mnth, args.average)
+            df = get_data(args.sensor_name, constants.sensors_current[args.sensor_name]['ID'], args.yr, args.mnth, args.average)
         except KeyError as e:
             message = f'Invalid sensor name: {args.sensor_name}, exiting...'
             print(message)
@@ -332,14 +400,15 @@ def main():
         if len(df.index) > 0:
             DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
             csv_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}.csv'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, csv_file_name)
+            xl_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}.xlsx'
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, csv_file_name, xl_file_name)
     else:
         loop_num = 0
         for k, v in constants.sensors_current.items():
             loop_num += 1
             message = f'Getting data for sensor {k} for {calendar.month_name[mnth]} {args.yr}, {loop_num} of {len(constants.sensors_current)}' 
             print(message)
-            df = get_data(v['ID'], args.yr, args.mnth, args.average)
+            df = get_data(k, v['ID'], args.yr, args.mnth, args.average)
             #print(df)
             print()
             if len(df.index) > 0:
