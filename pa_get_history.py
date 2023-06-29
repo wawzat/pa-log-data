@@ -320,33 +320,31 @@ def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name):
 
 def main():
     args = get_arguments()
-    yr = args.yr
-    mnth = args.mnth
     start_time = datetime.now()
     if args.sensor_name is not None:
         try:
-            df = get_data(constants.sensors_current[args.sensor_name]['ID'], yr, mnth, args.average)
+            df = get_data(constants.sensors_current[args.sensor_name]['ID'], args.yr, args.mnth, args.average)
         except KeyError as e:
             message = f'Invalid sensor name: {args.sensor_name}, exiting...'
             print(message)
             print()
             exit()
         if len(df.index) > 0:
-            DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}'
-            csv_file_name = f'pa_history_single_{args.sensor_name}_{yr}_{mnth}.csv'
+            DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
+            csv_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}.csv'
             write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, csv_file_name)
     else:
         loop_num = 0
         for k, v in constants.sensors_current.items():
             loop_num += 1
-            message = f'Getting data for sensor {k} for {calendar.month_name[mnth]} {yr}, {loop_num} of {len(constants.sensors_current)}' 
+            message = f'Getting data for sensor {k} for {calendar.month_name[mnth]} {args.yr}, {loop_num} of {len(constants.sensors_current)}' 
             print(message)
-            df = get_data(v['ID'], yr, mnth, args.average)
+            df = get_data(v['ID'], args.yr, args.mnth, args.average)
             #print(df)
             print()
             if len(df.index) > 0:
-                DOCUMENT_NAME = f'pa_history_{yr}_{mnth}'
-                csv_file_name = f'pa_history_{yr}_{mnth}.csv'
+                DOCUMENT_NAME = f'pa_history_{args.yr}_{args.mnth}'
+                csv_file_name = f'pa_history_{args.yr}_{args.mnth}.csv'
                 write_data(df, client, DOCUMENT_NAME, k, args.output, csv_file_name)
             sleep(60)
             end_time = datetime.now()
