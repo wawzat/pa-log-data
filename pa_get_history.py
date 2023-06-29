@@ -289,7 +289,7 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
     return df
 
 
-def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name, xl_file_name):
+def write_data(df, client, DOCUMENT_NAME, k, output, base_output_file_name):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
 
@@ -358,20 +358,20 @@ def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name, xl_file_name
             pass
     if output == 'c' or output == 'a':
         if sys.platform == 'win32':
-            output_pathname = Path(constants.MATRIX5) / csv_file_name
+            output_pathname = Path(constants.MATRIX5) / f'{base_output_file_name}.csv'
         elif sys.platform == 'linux':
-            output_pathname = Path.cwd() / csv_file_name
+            output_pathname = Path.cwd() / f'{base_output_file_name}.csv'
         try:
             df.to_csv(output_pathname, index=False, header=True)
-            message = f'Created {csv_file_name} in {output_pathname.parent}'
+            message = f'Created {output_pathname.name} in {output_pathname.parent}'
             print(message)
         except Exception as e:
             logging.exception('write_data() error writing Excel file')
     if output == 'x' or output == 'a':
         if sys.platform == 'win32':
-            output_pathname = Path(constants.MATRIX5) / xl_file_name
+            output_pathname = Path(constants.MATRIX5) / f'{base_output_file_name}.xlsx'
         elif sys.platform == 'linux':
-            output_pathname = Path.cwd() / xl_file_name
+            output_pathname = Path.cwd() / f'{base_output_file_name}.xlsx'
         try:
             with pd.ExcelWriter(output_pathname,
                                 engine='xlsxwriter',
@@ -380,10 +380,11 @@ def write_data(df, client, DOCUMENT_NAME, k, output, csv_file_name, xl_file_name
                 # Export the DataFrame to Excel
                 df.to_excel(writer, sheet_name='Sheet1', index=False)
                 format_spreadsheet(writer)
-            message = f'Created {xl_file_name} in {output_pathname.parent}'
+            message = f'Created {output_pathname.name} in {output_pathname.parent}'
             print(message)
         except Exception as e:
             logging.exception('write_data() error writing Excel file')
+            print('Error writing Excel file')
 
 
 def main():
@@ -399,9 +400,8 @@ def main():
             exit()
         if len(df.index) > 0:
             DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
-            csv_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}.csv'
-            xl_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}.xlsx'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, csv_file_name, xl_file_name)
+            base_output_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, base_output_file_name)
     else:
         loop_num = 0
         for k, v in constants.sensors_current.items():
@@ -413,8 +413,8 @@ def main():
             print()
             if len(df.index) > 0:
                 DOCUMENT_NAME = f'pa_history_{args.yr}_{args.mnth}'
-                csv_file_name = f'pa_history_{args.yr}_{args.mnth}.csv'
-                write_data(df, client, DOCUMENT_NAME, k, args.output, csv_file_name)
+                base_output_file_name = f'pa_history_{args.yr}_{args.mnth}'
+                write_data(df, client, DOCUMENT_NAME, k, args.output, base_output_file_name)
             sleep(60)
             end_time = datetime.now()
             time_per_loop = (end_time - start_time) / loop_num
