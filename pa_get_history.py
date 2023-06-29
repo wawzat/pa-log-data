@@ -19,7 +19,7 @@ The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20230627
+# James S. Lucas - 20230629
 
 import sys
 import requests
@@ -108,14 +108,15 @@ def get_arguments():
     parser = argparse.ArgumentParser(
     description='Get PurpleAir Sensor Historical Data.',
     prog='pa_get_history.py',
-    usage='%(prog)s [-m <month>] [-y <year>] [-s <sensor>] [-o <output>]',
+    usage='%(prog)s [-m <month>] [-y <year>] [-s <sensor>] [-o <output>] [-a <average>]',
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''    -m, --month  Optional. The month to get data for. If not provided, current month will be used.
+            description='''            -m, --month   Optional. The month to get data for. If not provided, current month will be used.
             -y, --year    Optional. The year to get data for. If not provided, current year will be used.
             -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.
-            -o, --output  Optional. Output format. If not provided, output will be written to a CSV file.              ''')
+            -o, --output  Optional. Output format. If not provided, output will be written to a CSV file.  
+            -a, --average Optional. Number of minutes to average. If not provided, 30 minutes will be used.            ''')
     g.add_argument('-o', '--output',
                     type=str,
                     default='c',
@@ -138,12 +139,19 @@ def get_arguments():
                     default=None,
                     dest='sensor_name',
                     help=argparse.SUPPRESS)
+    g.add_argument('-a', '--average',
+                    type=int,
+                    default=30,
+                    choices = [2, 10, 30, 60],
+                    metavar='',
+                    dest='average',
+                    help=argparse.SUPPRESS)
 
     args = parser.parse_args()
     return(args)
 
 
-def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
+def get_data(sensor_id, yr, mnth, average) -> pd.DataFrame:
     """
     A function that queries the PurpleAir API for sensor data for a given sensor_id.
 
@@ -156,7 +164,6 @@ def get_data(sensor_id, yr, mnth) -> pd.DataFrame:
         humidity, and PM2.5 readings.
     """
     last_day_of_month = calendar.monthrange(yr, mnth)[1]
-    average = 30
     average_limits = {
         2: 2,
         10: 3,
@@ -318,7 +325,7 @@ def main():
     start_time = datetime.now()
     if args.sensor_name is not None:
         try:
-            df = get_data(constants.sensors_current[args.sensor_name]['ID'], yr, mnth)
+            df = get_data(constants.sensors_current[args.sensor_name]['ID'], yr, mnth, args.average)
         except KeyError as e:
             message = f'Invalid sensor name: {args.sensor_name}, exiting...'
             print(message)
@@ -334,7 +341,7 @@ def main():
             loop_num += 1
             message = f'Getting data for sensor {k} for {calendar.month_name[mnth]} {yr}, {loop_num} of {len(constants.sensors_current)}' 
             print(message)
-            df = get_data(v['ID'], yr, mnth)
+            df = get_data(v['ID'], yr, mnth, args.average)
             #print(df)
             print()
             if len(df.index) > 0:
