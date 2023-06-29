@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This program retrieves historical data from PurpleAir sensors and adds it to a Google Sheets document. 
+This program retrieves historical data from PurpleAir sensors and adds it to a Google Sheets document, CSV, Excel or all three. 
 It uses the PurpleAir API to retrieve sensor data for a given sensor ID and time frame. If a single sensor name is not provided the list
 of sensors is retrieved from constants.py and the program loops through the list of sensors, retrieving data for each sensor.
 The sensor data is then uploaded to a Google Sheets document using the Google Sheets API.
@@ -14,6 +14,7 @@ The program can be run from the command line with the following arguments:
     -y, --year: The year to get data for.
     -s, --sensor: Optional. The name of a sensor to get data for.
     -o, --output: Optional. The output format. If not provided, output will be written to a CSV file.
+    -a, --average: Optional. The number of minutes to average. If not provided, 30 minutes will be used.
 
 The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
@@ -406,7 +407,7 @@ def main():
         loop_num = 0
         for k, v in constants.sensors_current.items():
             loop_num += 1
-            message = f'Getting data for sensor {k} for {calendar.month_name[mnth]} {args.yr}, {loop_num} of {len(constants.sensors_current)}' 
+            message = f'Getting data for sensor {k} for {calendar.month_name[args.mnth]} {args.yr}, {loop_num} of {len(constants.sensors_current)}' 
             print(message)
             df = get_data(k, v['ID'], args.yr, args.mnth, args.average)
             #print(df)
