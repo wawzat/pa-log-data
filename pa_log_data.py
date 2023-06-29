@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230625
+# James S. Lucas - 20230629
 
 import sys
 import requests
@@ -237,7 +237,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
     """
     MAX_ATTEMPTS: int = 4
     attempts: int = 0
-    SLEEP_DURATUION: int = 90
+    SLEEP_DURATION: int = 90
     while attempts < MAX_ATTEMPTS:
         try:
             # open the Google Sheets output worksheet and write the data
@@ -252,8 +252,8 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
             logger.exception('gspread error in write_data()')
             attempts += 1
             if attempts < MAX_ATTEMPTS:
-                sleep(SLEEP_DURATUION)
-                SLEEP_DURATUION += 90
+                sleep(SLEEP_DURATION)
+                SLEEP_DURATION += 90
             else:
                 logger.exception('gspread error in write_data() max attempts reached')  
     # Write the data to local csv file 
