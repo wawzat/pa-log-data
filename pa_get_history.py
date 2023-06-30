@@ -23,6 +23,7 @@ The program contains the following functions:
 # James S. Lucas - 20230629
 
 import sys
+import os
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
@@ -152,10 +153,10 @@ def get_arguments():
     return(args)
 
 
-def format_spreadsheet(writer):
+def format_spreadsheet(writer, sheet):
     # Set the column formats and widths
     workbook = writer.book
-    worksheet = writer.sheets['Sheet1']
+    worksheet = writer.sheets[sheet]
     format1 = workbook.add_format({'num_format': 'm-d-Y h:mm:ss'})
     format2 = workbook.add_format({'num_format': '#,##0.00'})
     format3 = workbook.add_format({'num_format': '#,##0.000'})
@@ -290,7 +291,7 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
     return df
 
 
-def write_data(df, client, DOCUMENT_NAME, k, output, base_output_file_name):
+def write_data(df, client, DOCUMENT_NAME, sensor_id, output, base_output_file_name, yr, mnth):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
 
@@ -314,7 +315,7 @@ def write_data(df, client, DOCUMENT_NAME, k, output, base_output_file_name):
         attempts: int = 0
         SLEEP_DURATION = 90
         while attempts < MAX_ATTEMPTS:
-            worksheet_name = k
+            worksheet_name = sensor_id
             try:
                 # open the Google Sheets output worksheet and write the data
                 spreadsheet = client.open(DOCUMENT_NAME)
@@ -370,7 +371,10 @@ def write_data(df, client, DOCUMENT_NAME, k, output, base_output_file_name):
             logging.exception('write_data() error writing Excel file')
     if output == 'x' or output == 'a':
         if sys.platform == 'win32':
-            output_pathname = Path(constants.MATRIX5) / f'{base_output_file_name}.xlsx'
+            folder_name = f'{yr}-{str(mnth).zfill(2)}'
+            if not os.path.isdir(Path(constants.MATRIX5) / folder_name):
+                os.mkdir(Path(constants.MATRIX5) / folder_name)
+            output_pathname = Path(constants.MATRIX5) / folder_name / f'{base_output_file_name}.xlsx'
         elif sys.platform == 'linux':
             output_pathname = Path.cwd() / f'{base_output_file_name}.xlsx'
         try:
@@ -379,9 +383,9 @@ def write_data(df, client, DOCUMENT_NAME, k, output, base_output_file_name):
                                 engine_kwargs={'options': {'strings_to_numbers': True}}
                                 ) as writer:
                 # Export the DataFrame to Excel
-                df.to_excel(writer, sheet_name='Sheet1', index=False)
-                format_spreadsheet(writer)
-            message = f'Created {output_pathname.name} in {output_pathname.parent}'
+                df.to_excel(writer, sheet_name=sensor_id, index=False)
+                format_spreadsheet(writer, sensor_id)
+            message = f'Created or updated {output_pathname.name} in {output_pathname.parent}'
             print(message)
         except Exception as e:
             logging.exception('write_data() error writing Excel file')
@@ -402,7 +406,7 @@ def main():
         if len(df.index) > 0:
             DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
             base_output_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, base_output_file_name)
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, base_output_file_name, args.yr, args.mnth)
     else:
         loop_num = 0
         for k, v in constants.sensors_current.items():
@@ -414,8 +418,8 @@ def main():
             print()
             if len(df.index) > 0:
                 DOCUMENT_NAME = f'pa_history_{args.yr}_{args.mnth}'
-                base_output_file_name = f'pa_history_{args.yr}_{args.mnth}'
-                write_data(df, client, DOCUMENT_NAME, k, args.output, base_output_file_name)
+                base_output_file_name = f'pa_history_{k}_{args.yr}_{args.mnth}'
+                write_data(df, client, DOCUMENT_NAME, k, args.output, base_output_file_name, args.yr, args.mnth)
             sleep(60)
             end_time = datetime.now()
             time_per_loop = (end_time - start_time) / loop_num
