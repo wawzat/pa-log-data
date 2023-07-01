@@ -84,3 +84,14 @@
 - As such they are not manageable from the Google Sheets Web UI.
 - This program lists all Google Sheets documents prefixed with "pa_history" that are owned by or shared with the Google Service Account and optionally deletes the documents owned by the Google Service Account.
 - I typically "Make a copy" from the Google Sheets Web UI and share it with the Google Sheets Account before deleting the original from the Google Service Account.
+  
+  
+  # xl_merge.py  
+    
+## Python program to merge Excel files.  
+  
+### Notes:  
+  
+- This program merges all Excel files in a directory into a single Excel workbook.
+- The program assumes the file structure begins with the path defined in constants.py followed by a folder in yyyy-mm format.
+- Files to be excluded are hard coded in exclude_list.
