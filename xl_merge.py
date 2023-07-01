@@ -7,6 +7,8 @@ Combine and merge multiple spreadsheets into one.
 import os
 import pandas as pd
 from pathlib import Path
+import argparse
+from datetime import datetime
 import constants
 
 def format_spreadsheet(writer, sheet):
@@ -104,7 +106,7 @@ def get_arguments():
 
 def main():
     args = get_arguments()
-    root_path = Path(constants.MATRIX5) / f'{args.yr}-{args.mnth}'
+    root_path = Path(constants.MATRIX5) / f'{args.yr}-{str(args.mnth).zfill(2)}'
     file_list = list(root_path.iterdir())
     exclude_list = ('combined_summarized_xl.xlsx', 'combined_sheets_xl.xlsx')
     for filename in exclude_list:
