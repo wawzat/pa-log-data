@@ -291,7 +291,7 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
     return df
 
 
-def write_data(df, client, DOCUMENT_NAME, sensor_id, output, base_output_file_name, yr, mnth):
+def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NAME, yr, mnth):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
 
@@ -360,9 +360,9 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, base_output_file_na
             pass
     if output == 'c' or output == 'a':
         if sys.platform == 'win32':
-            output_pathname = Path(constants.MATRIX5) / f'{base_output_file_name}.csv'
+            output_pathname = Path(constants.MATRIX5) / f'{BASE_OUTPUT_FILE_NAME}.csv'
         elif sys.platform == 'linux':
-            output_pathname = Path.cwd() / f'{base_output_file_name}.csv'
+            output_pathname = Path.cwd() / f'{BASE_OUTPUT_FILE_NAME}.csv'
         try:
             df.to_csv(output_pathname, index=False, header=True)
             message = f'Created {output_pathname.name} in {output_pathname.parent}'
@@ -374,9 +374,9 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, base_output_file_na
         if sys.platform == 'win32':
             if not os.path.isdir(Path(constants.MATRIX5) / folder_name):
                 os.mkdir(Path(constants.MATRIX5) / folder_name)
-            output_pathname = Path(constants.MATRIX5) / folder_name / f'{base_output_file_name}.xlsx'
+            output_pathname = Path(constants.MATRIX5) / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
         elif sys.platform == 'linux':
-            output_pathname = Path.cwd() / folder_name / f'{base_output_file_name}.xlsx'
+            output_pathname = Path.cwd() / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
         try:
             with pd.ExcelWriter(output_pathname,
                                 engine='xlsxwriter',
@@ -404,9 +404,9 @@ def main():
             print()
             exit()
         if len(df.index) > 0:
-            DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
-            base_output_file_name = f'pa_history_single_{args.sensor_name}_{args.yr}_{args.mnth}'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, base_output_file_name, args.yr, args.mnth)
+            DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{str(args.mnth).zfill(2)}'
+            BASE_OUTPUT_FILE_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{str(args.mnth).zfill(2)}'
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, BASE_OUTPUT_FILE_NAME, args.yr, args.mnth)
     else:
         loop_num = 0
         for k, v in constants.sensors_current.items():
@@ -417,9 +417,9 @@ def main():
             #print(df)
             print()
             if len(df.index) > 0:
-                DOCUMENT_NAME = f'pa_history_{args.yr}_{args.mnth}'
-                base_output_file_name = f'pa_history_{k}_{args.yr}_{args.mnth}'
-                write_data(df, client, DOCUMENT_NAME, k, args.output, base_output_file_name, args.yr, args.mnth)
+                DOCUMENT_NAME = f'pa_history_{args.yr}_{str(args.mnth).zfill(2)}'
+                BASE_OUTPUT_FILE_NAME = f'pa_history_{k}_{args.yr}_{str(args.mnth).zfill(2)}'
+                write_data(df, client, DOCUMENT_NAME, k, args.output, BASE_OUTPUT_FILE_NAME, args.yr, args.mnth)
             sleep(60)
             end_time = datetime.now()
             time_per_loop = (end_time - start_time) / loop_num
