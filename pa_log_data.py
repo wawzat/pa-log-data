@@ -227,7 +227,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     return df
 
 
-def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=False):
+def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
 
@@ -237,7 +237,6 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
         DOCUMENT_NAME (str): The name of the Google Sheets document to write to.
         worksheet_name (str): The name of the worksheet to write the data to.
         write_mode (str): The mode for writing the data to the worksheet. Either "append" or "update".
-        WRITE_CSV (bool, optional): Whether to also write the DataFrame to a CSV file. Defaults to False.
 
     Raises:
         Exception: If an error occurs during the writing process.
@@ -266,12 +265,6 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode, WRITE_CSV=
                 SLEEP_DURATION += 90
             else:
                 logger.exception('gspread error in write_data() max attempts reached')  
-    # Write the data to local csv file 
-    if WRITE_CSV is True:
-        try:
-            df.to_csv(output_pathname, mode='a', index=True, header=True)
-        except Exception as e:
-            logger.exception('write_data() error writing csv')
 
 
 def current_process(df):
@@ -499,7 +492,7 @@ def main():
         df = get_data(five_min_ago, constants.BBOX_DICT.get(k)[0])
         if len(df.index) > 0:
             write_mode = 'append'
-            write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode, constants.WRITE_CSV)
+            write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode)
         else:
             pass
     local_start, regional_start, process_start, status_start = datetime.now(), datetime.now(), datetime.now(), datetime.now()
@@ -513,18 +506,18 @@ def main():
                 df_local = get_data(local_start, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0])
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
-                    write_data(df_local, client, constants.DOCUMENT_NAME, constants.LOCAL_WORKSHEET_NAME, write_mode, constants.WRITE_CSV)
+                    write_data(df_local, client, constants.DOCUMENT_NAME, constants.LOCAL_WORKSHEET_NAME, write_mode)
                     sleep(10)
                     df_current = current_process(df_local)
                     write_mode: str = 'update'
-                    write_data(df_current, client, constants.DOCUMENT_NAME, constants.CURRENT_WORKSHEET_NAME, write_mode, constants.WRITE_CSV)
+                    write_data(df_current, client, constants.DOCUMENT_NAME, constants.CURRENT_WORKSHEET_NAME, write_mode)
                 local_start: datetime = datetime.now()
             if regional_et > constants.REGIONAL_INTERVAL_DURATION:
                 for regional_key in constants.REGIONAL_KEYS:
                     df = get_data(regional_start, constants.BBOX_DICT.get(regional_key)[0]) 
                     if len(df.index) > 0:
                         write_mode: str = 'append'
-                        write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(regional_key)[1], write_mode, constants.WRITE_CSV)
+                        write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(regional_key)[1], write_mode)
                     sleep(10)
                 regional_start: datetime = datetime.now()
             if process_et > constants.PROCESS_INTERVAL_DURATION:
