@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230629
+# James S. Lucas - 20230702
 
 import sys
 import requests
@@ -137,10 +137,20 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         A new DataFrame with the rows removed where the difference between the PM2.5 atmospheric concentration readings
         from two sensors is either greater than or equal to 5 or greater than or equal to 70% of the average of the two readings.
     """
+    df = df.drop(df[df['pm2.5_atm_a'] > 2000].index)
+    df = df.drop(df[df['pm2.5_atm_b'] > 2000].index)
     df = df.drop(df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) >= 5].index)
     df = df.drop(
         df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) /
             ((df['pm2.5_atm_a'] + df['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
+        ].index
+    )
+    df = df.drop(df[df['pm2.5_cf_1_a'] > 2000].index)
+    df = df.drop(df[df['pm2.5_cf_1_b'] > 2000].index)
+    df = df.drop(df[abs(df['pm2.5_cf_1_a'] - df['pm2.5_cf_1_b']) >= 5].index)
+    df = df.drop(
+        df[abs(df['pm2.5_cf_1_a'] - df['pm2.5_cf_1_b']) /
+            ((df['pm2.5_cf_1_a'] + df['pm2.5_cf_1_b'] + 1e-6) / 2) >= 0.7
         ].index
     )
     return df
