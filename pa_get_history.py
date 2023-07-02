@@ -370,13 +370,13 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, base_output_file_na
         except Exception as e:
             logging.exception('write_data() error writing Excel file')
     if output == 'x' or output == 'a':
+        folder_name = f'{yr}-{str(mnth).zfill(2)}'
         if sys.platform == 'win32':
-            folder_name = f'{yr}-{str(mnth).zfill(2)}'
             if not os.path.isdir(Path(constants.MATRIX5) / folder_name):
                 os.mkdir(Path(constants.MATRIX5) / folder_name)
             output_pathname = Path(constants.MATRIX5) / folder_name / f'{base_output_file_name}.xlsx'
         elif sys.platform == 'linux':
-            output_pathname = Path.cwd() / f'{base_output_file_name}.xlsx'
+            output_pathname = Path.cwd() / folder_name / f'{base_output_file_name}.xlsx'
         try:
             with pd.ExcelWriter(output_pathname,
                                 engine='xlsxwriter',
