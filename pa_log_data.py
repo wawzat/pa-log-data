@@ -26,25 +26,16 @@ from configparser import ConfigParser
 config = ConfigParser()
 config.read('config.ini')
 
-
 # Gets or creates a logger
 logger = logging.getLogger(__name__)  
-
 # set log level
 logger.setLevel(logging.WARNING)
-
 # define file handler and set formatter
 file_handler = logging.FileHandler('pa_log_data_error.log')
 formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
 file_handler.setFormatter(formatter)
-
 # add file handler to logger
 logger.addHandler(file_handler)
-
-# Setup exception logging
-#format_string = '%(name)s - %(asctime)s : %(message)s'
-#logging.basicConfig(filename='error.log',
-#                    format = format_string)
 
 session = requests.Session()
 retry = Retry(connect=5, backoff_factor=1.0)
@@ -67,13 +58,14 @@ elif sys.platform == 'linux':
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
                     ]
-GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
 if GSPREAD_SERVICE_ACCOUNT_JSON_PATH == '':
     logger.error('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH not set in config.ini, exiting...')
     print('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH not set in config.ini, exiting...')
     sys.exit(1)
+GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
 creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
+client.set_timeout(240)
 
 
 def status_update(local_et, regional_et, process_et):
@@ -264,7 +256,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
                 sleep(SLEEP_DURATION)
                 SLEEP_DURATION += 90
             else:
-                logger.exception('gspread error in write_data() max attempts reached')  
+                logger.exception('gspread error in write_data() max attempts reached')
 
 
 def current_process(df):
