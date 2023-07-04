@@ -58,11 +58,11 @@ elif sys.platform == 'linux':
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
                     ]
+GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
 if GSPREAD_SERVICE_ACCOUNT_JSON_PATH == '':
     logger.error('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH not set in config.ini, exiting...')
     print('Error: GSPREAD_SERVICE_ACCOUNT_JSON_PATH not set in config.ini, exiting...')
     sys.exit(1)
-GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
 creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 client.set_timeout(240)
