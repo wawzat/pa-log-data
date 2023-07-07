@@ -20,7 +20,7 @@ The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20230629
+# James S. Lucas - 20230707
 
 import sys
 import os
@@ -208,6 +208,10 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
         humidity, and PM2.5 readings.
     """
     last_day_of_month = calendar.monthrange(yr, mnth)[1]
+    if datetime.now().month == mnth and datetime.now().year == yr and datetime.now().day < last_day_of_month:
+        last_day_of_range = datetime.now().day
+    else:
+        last_day_of_range = calendar.monthrange(yr, mnth)[1]
     # minutes: days
     average_limits = {
         0: 2,
@@ -220,17 +224,18 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
     root_url: str = 'https://api.purpleair.com/v1/sensors/{ID}/history?start_timestamp={start_timestamp}&end_timestamp={end_timestamp}&average={average}&fields={fields}'
     df_list = []  # List to store dataframes
     latest_end_timestamp = 0  # Track the latest end timestamp
-    num_iterations = math.ceil(last_day_of_month / average_limits.get(average))
+    num_iterations = math.ceil(last_day_of_range / average_limits.get(average))
     for loop_num in range(1, num_iterations + 1):
-        start_day = int((last_day_of_month / num_iterations) * (loop_num - 1) + 1)
-        end_day = int((last_day_of_month / num_iterations) * loop_num)
+        start_day = int((last_day_of_range / num_iterations) * (loop_num - 1) + 1)
+        end_day = int((last_day_of_range / num_iterations) * loop_num)
         message = f'sensor id: {sensor_id} from day {start_day} to {end_day}, loop {loop_num} of {num_iterations}'
         print(message)
         # Adjust end_day if it exceeds the actual last day of the month
-        if end_day > last_day_of_month:
-            end_day = last_day_of_month
+        if end_day > last_day_of_range:
+            end_day = last_day_of_range
         start_timestamp = int(datetime(yr, mnth, start_day, 0, 0, 1).timestamp())
         end_timestamp = int(datetime(yr, mnth, end_day, 23, 59, 59).timestamp())
+        print(start_timestamp, end_timestamp)
         # Adjust end_timestamp based on the latest end_timestamp
         if latest_end_timestamp > start_timestamp:
             start_timestamp = latest_end_timestamp + 1
