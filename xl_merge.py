@@ -115,8 +115,9 @@ def get_file_list(root_path):
 
 def get_dfs(file_list):
     dfs = []
+    print(file_list[0].parent)
     for filename in file_list:
-        print(filename)
+        print(f'   {filename.name}')
         df = pd.read_excel(filename)
         dfs.append(df)
     return dfs
@@ -136,6 +137,8 @@ def write_xl(dfs, root_path):
                 sensor_index = str(df['name'].iloc[0])
                 df.to_excel(writer, sheet_name=sensor_index, index=False)
                 format_spreadsheet(writer, sensor_index)
+    print()
+    print(f'Combined {len(dfs)} Excel files into {root_path / "combined_sheets_xl.xlsx"}')
 
 
 def main():
@@ -144,8 +147,6 @@ def main():
     file_list = get_file_list(root_path)
     dfs = get_dfs(file_list)
     write_xl(dfs, root_path)
-    print()
-    print(f'Combined {len(dfs)} Excel files into {root_path / "combined_sheets_xl.xlsx"}')
 
 
 if __name__ == '__main__':
