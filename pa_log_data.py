@@ -148,8 +148,25 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     cols: List[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
     try:
         response = session.get(url)
-    except Exception as e:
-        logger.exception('get_data error')
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        logger.exception(f'get_data error: {e}')
+        df = pd.DataFrame()
+        return df
+    except requests.exceptions.ConnectionError as e:
+        logger.exception(f'get_data error: {e}')
+        df = pd.DataFrame()
+        return df
+    except requests.exceptions.Timeout as e:
+        logger.exception(f'get_data error: {e}')
+        df = pd.DataFrame()
+        return df
+    except requests.exceptions.TooManyRedirects as e:
+        logger.exception(f'get_data error: {e}')
+        df = pd.DataFrame()
+        return df
+    except requests.exceptions.RequestException as e:
+        logger.exception(f'get_data error: {e}')
         df = pd.DataFrame()
         return df
     if response.ok:
