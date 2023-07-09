@@ -117,6 +117,57 @@ def elapsed_time(local_start, regional_start, process_start, status_start):
     return local_et, regional_et, process_et, status_et
 
 
+def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
+    """
+    A function that queries the PurpleAir API for sensor data within a given bounding box and time frame.
+
+    Args:
+        previous_time (datetime): A datetime object representing the time of the last query.
+        bbox (List[float]): A list of four floats representing the bounding box of the area of interest.
+            The order is [northwest longitude, southeast latitude, southeast longitude, northwest latitude].
+
+    Returns:
+        A pandas DataFrame containing sensor data for the specified area and time frame. The DataFrame will contain columns
+        for the timestamp of the data, the index of the sensor, and various sensor measurements such as temperature,
+        humidity, and PM2.5 readings.
+    """
+    et_since = int((datetime.now() - previous_time + timedelta(seconds=20)).total_seconds())
+    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+    params = {
+        'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
+                "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
+                "pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,"
+                "0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count",
+        'nwlng': bbox[0],
+        'selat': bbox[1],
+        'selng': bbox[2],
+        'nwlat': bbox[3],
+        'et': et_since
+    }
+    url: str = root_url.format(**params)
+    cols: List[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
+    try:
+        response = session.get(url)
+    except Exception as e:
+        logger.exception('get_data error')
+        df = pd.DataFrame()
+        return df
+    if response.ok:
+        url_data = response.content
+        json_data = json.loads(url_data)
+        df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
+        df = df.fillna('')
+        df['time_stamp'] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
+        # convert the lat and lon values to strings
+        df['latitude'] = df['latitude'].astype(str)
+        df['longitude'] = df['longitude'].astype(str)
+        df = df[cols]
+    else:
+        df = pd.DataFrame()
+        logger.exception('get_data() response not ok')
+    return df
+
+
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Removes rows from the input DataFrame where the difference between the PM2.5 atmospheric concentration readings
@@ -167,57 +218,6 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     df[constants.cols_8] = df[constants.cols_8].round(2)
     df[constants.cols_9] = df[constants.cols_9].astype(int)
     df = df[constants.cols]
-    return df
-
-
-def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
-    """
-    A function that queries the PurpleAir API for sensor data within a given bounding box and time frame.
-
-    Args:
-        previous_time (datetime): A datetime object representing the time of the last query.
-        bbox (List[float]): A list of four floats representing the bounding box of the area of interest.
-            The order is [northwest longitude, southeast latitude, southeast longitude, northwest latitude].
-
-    Returns:
-        A pandas DataFrame containing sensor data for the specified area and time frame. The DataFrame will contain columns
-        for the timestamp of the data, the index of the sensor, and various sensor measurements such as temperature,
-        humidity, and PM2.5 readings.
-    """
-    et_since = int((datetime.now() - previous_time + timedelta(seconds=20)).total_seconds())
-    root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
-    params = {
-        'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
-                "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
-                "pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,"
-                "0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count",
-        'nwlng': bbox[0],
-        'selat': bbox[1],
-        'selng': bbox[2],
-        'nwlat': bbox[3],
-        'et': et_since
-    }
-    url: str = root_url.format(**params)
-    cols: List[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
-    try:
-        response = session.get(url)
-    except Exception as e:
-        logger.exception('get_data error')
-        df = pd.DataFrame()
-        return df
-    if response.ok:
-        url_data = response.content
-        json_data = json.loads(url_data)
-        df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
-        df = df.fillna('')
-        df['time_stamp'] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
-        # convert the lat and lon values to strings
-        df['latitude'] = df['latitude'].astype(str)
-        df['longitude'] = df['longitude'].astype(str)
-        df = df[cols]
-    else:
-        df = pd.DataFrame()
-        logger.exception('get_data() response not ok')
     return df
 
 
