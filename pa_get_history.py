@@ -252,8 +252,21 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
         cols: List[str] = ['time_stamp', 'time_stamp_pacific', 'sensor_index', 'name'] + [col for col in params['fields'].split(',')] + ['pm25_epa'] + ['Ipm25']
         try:
             response = session.get(url)
-        except Exception as e:
-            logging.exception('get_data error')
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as http_err:
+            logging.exception(f'HTTP error {http_err}')
+            return pd.DataFrame()
+        except requests.exceptions.ConnectionError as conn_err:
+            logging.exception(f'Connection error {conn_err}')
+            return pd.DataFrame()
+        except requests.exceptions.Timeout as timeout_err:
+            logging.exception(f'Timeout error {timeout_err}')
+            return pd.DataFrame()
+        except requests.exceptions.TooManyRedirects as redir_err:
+            logging.exception(f'Too many redirects error {redir_err}')
+            return pd.DataFrame()
+        except requests.exceptions.RequestException as req_err:
+            logging.exception(f'Other request exception {req_err}')
             return pd.DataFrame()
         if response.ok:
             url_data = response.content
@@ -428,6 +441,7 @@ def main():
             time_per_loop = (end_time - start_time) / loop_num
             time_remaining = time_per_loop * (len(constants.sensors_current) - loop_num)
             print(f'Time per loop: {time_per_loop} / Time remaining: {time_remaining}')
+    session.close()
 
 
 if __name__ == "__main__":
