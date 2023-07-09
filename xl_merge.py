@@ -2,7 +2,7 @@
 """
 Combine and merge multiple spreadsheets into one.
 """
-# James S. Lucas - 20230701
+# James S. Lucas - 20230709
 
 import os
 import pandas as pd
@@ -104,34 +104,49 @@ def get_arguments():
     return(args)
 
 
-def main():
-    args = get_arguments()
-    root_path = Path(constants.MATRIX5) / f'{args.yr}-{str(args.mnth).zfill(2)}'
+def get_file_list(root_path):
     file_list = list(root_path.iterdir())
     exclude_list = ('combined_summarized_xl.xlsx', 'combined_sheets_xl.xlsx')
     for filename in exclude_list:
         if os.path.exists(root_path / filename):
             file_list.remove(root_path / filename)
-    df_list = []
+    return file_list
+
+
+def get_dfs(file_list):
+    dfs = []
     for filename in file_list:
         print(filename)
         df = pd.read_excel(filename)
-        df_list.append(df)
+        dfs.append(df)
+    return dfs
+
+
+def write_xl(dfs, root_path):
     with pd.ExcelWriter(root_path / "combined_sheets_xl.xlsx",
                             engine='xlsxwriter',
                             engine_kwargs={'options': {'strings_to_numbers': True}}
                             ) as writer:
-        df_combined = pd.concat(df_list, ignore_index=True)
+        df_combined = pd.concat(dfs, ignore_index=True)
         df_combined.to_excel(writer, sheet_name='combined', index=False)
         format_spreadsheet(writer, 'combined')
-        for df in df_list:
+        for df in dfs:
             if not df.empty:
                 sheet_name = root_path.name
                 sensor_index = str(df['name'].iloc[0])
                 df.to_excel(writer, sheet_name=sensor_index, index=False)
                 format_spreadsheet(writer, sensor_index)
+
+
+def main():
+    args = get_arguments()
+    root_path = Path(constants.MATRIX5) / f'{args.yr}-{str(args.mnth).zfill(2)}'
+    file_list = get_file_list(root_path)
+    dfs = get_dfs(file_list)
+    write_xl(dfs, root_path)
     print()
-    print(f'Combined {len(df_list)} Excel files into {root_path / "combined_sheets_xl.xlsx"}')
+    print(f'Combined {len(dfs)} Excel files into {root_path / "combined_sheets_xl.xlsx"}')
+
 
 if __name__ == '__main__':
     main()
