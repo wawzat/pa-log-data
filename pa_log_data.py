@@ -376,23 +376,17 @@ def process_data(DOCUMENT_NAME, client):
 
 def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
     """
-    Analyzes air quality sensor data and calculates the performance of each sensor.
+    Calculates the health of each sensor based on the percentage of good readings. Gets maximum error, average signal strength, and uptime.
+    Writes the results to a Google Sheet specified by DOCUMENT_NAME and OUT_WORKSHEET_HEALTH_NAME.
 
     Args:
-        client (object): A client object used to access a Google Sheets API.
-        df (pandas.DataFrame): A DataFrame containing air quality sensor data.
-        DOCUMENT_NAME (str): The name of the Google Sheets document to write the output to.
-        OUT_WORKSHEET_HEALTH_NAME (str): The name of the worksheet to write the health data to.
+        client (gspread.client.Client): The authorized Google Sheets API client.
+        df (pandas.DataFrame): The DataFrame containing the sensor data.
+        DOCUMENT_NAME (str): The name of the Google Sheet document.
+        OUT_WORKSHEET_HEALTH_NAME (str): The name of the worksheet to write the sensor health data to.
 
     Returns:
         None
-
-    This function compares the readings from two PurpleAir sensor channels (A and B) and removes data points where the difference
-    is greater than or equal to 5 ug/m^3 or 70%, or greater than 2000. For each sensor, it calculates the percentage of "good" data points,
-    which is defined as the percentage of data points that passed the threshold check. 
-    It also calculates the maximum difference between the A and B channels,
-    the mean signal strength (RSSI), and the maximum uptime for each sensor. 
-    The output is written to a specified Google Sheets document worksheet.
     """
     sensor_health_list = []
     write_mode: str = 'update'
