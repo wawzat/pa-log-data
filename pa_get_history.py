@@ -235,7 +235,6 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
             end_day = last_day_of_range
         start_timestamp = int(datetime(yr, mnth, start_day, 0, 0, 1).timestamp())
         end_timestamp = int(datetime(yr, mnth, end_day, 23, 59, 59).timestamp())
-        print(start_timestamp, end_timestamp)
         # Adjust end_timestamp based on the latest end_timestamp
         if latest_end_timestamp > start_timestamp:
             start_timestamp = latest_end_timestamp + 1
@@ -377,8 +376,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
     if output == 'x' or output == 'a':
         folder_name = f'{yr}-{str(mnth).zfill(2)}'
         if sys.platform == 'win32':
-            if not os.path.isdir(Path(constants.MATRIX5) / folder_name):
-                os.mkdir(Path(constants.MATRIX5) / folder_name)
+            os.makedirs(Path(constants.MATRIX5) / folder_name, exist_ok=True)
             output_pathname = Path(constants.MATRIX5) / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
         elif sys.platform == 'linux':
             output_pathname = Path.cwd() / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
