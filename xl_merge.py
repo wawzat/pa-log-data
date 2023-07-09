@@ -5,6 +5,7 @@ Combine and merge multiple spreadsheets into one.
 # James S. Lucas - 20230709
 
 import os
+import sys
 import pandas as pd
 from pathlib import Path
 import argparse
@@ -105,6 +106,15 @@ def get_arguments():
 
 
 def get_file_list(root_path):
+    """
+    Returns a list of file paths to Excel files in the specified directory, excluding any files in the exclude_list.
+
+    Args:
+    - root_path: A pathlib.Path object representing the directory to search for Excel files.
+
+    Returns:
+    - file_list: A list of file paths to Excel files in the specified directory, excluding any files in the exclude_list.
+    """
     file_list = list(root_path.iterdir())
     exclude_list = ('combined_summarized_xl.xlsx', 'combined_sheets_xl.xlsx')
     for filename in exclude_list:
@@ -114,6 +124,15 @@ def get_file_list(root_path):
 
 
 def get_dfs(file_list):
+    """
+    Reads in a list of Excel files and returns a list of pandas dataframes.
+
+    Args:
+    - file_list: A list of file paths to Excel files.
+
+    Returns:
+    - dfs: A list of pandas dataframes, one for each Excel file in file_list.
+    """
     dfs = []
     print(file_list[0].parent)
     for filename in file_list:
@@ -124,6 +143,16 @@ def get_dfs(file_list):
 
 
 def write_xl(dfs, root_path):
+    """
+    Writes a list of pandas dataframes to an Excel file, with each dataframe on a separate sheet and one combined sheet.
+
+    Args:
+    - dfs: A list of pandas dataframes to write to the Excel file.
+    - root_path: A pathlib.Path object representing the directory to write the Excel file to.
+
+    Returns:
+    - None
+    """
     with pd.ExcelWriter(root_path / "combined_sheets_xl.xlsx",
                             engine='xlsxwriter',
                             engine_kwargs={'options': {'strings_to_numbers': True}}
@@ -144,9 +173,14 @@ def write_xl(dfs, root_path):
 def main():
     args = get_arguments()
     root_path = Path(constants.MATRIX5) / f'{args.yr}-{str(args.mnth).zfill(2)}'
-    file_list = get_file_list(root_path)
-    dfs = get_dfs(file_list)
-    write_xl(dfs, root_path)
+    if os.path.exists(root_path):
+        file_list = get_file_list(root_path)
+        dfs = get_dfs(file_list)
+        write_xl(dfs, root_path)
+    else:
+        print(f'Path does not exist: {root_path}')
+        print('Exiting...')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
