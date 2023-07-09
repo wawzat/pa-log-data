@@ -120,14 +120,16 @@ def elapsed_time(local_start, regional_start, process_start, status_start):
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Removes rows from the input DataFrame where the difference between the PM2.5 atmospheric concentration readings
-    from two sensors is either greater than or equal to 5 or greater than or equal to 70% of the average of the two readings.
+    from two sensors is either greater than or equal to 5 or greater than or equal to 70% of the average of the two readings,
+    or greater than 2000.
 
     Args:
         df (pd.DataFrame): The input DataFrame containing the PM2.5 atmospheric concentration readings from two sensors.
 
     Returns:
         A new DataFrame with the rows removed where the difference between the PM2.5 atmospheric concentration readings
-        from two sensors is either greater than or equal to 5 or greater than or equal to 70% of the average of the two readings.
+        from two sensors is either greater than or equal to 5 or greater than or equal to 70% of the average of the two readings,
+        or greater than 2000.
     """
     df = df.drop(df[df['pm2.5_atm_a'] > 2000].index)
     df = df.drop(df[df['pm2.5_atm_b'] > 2000].index)
@@ -386,7 +388,7 @@ def sensor_health(client, df, DOCUMENT_NAME, OUT_WORKSHEET_HEALTH_NAME):
         None
 
     This function compares the readings from two PurpleAir sensor channels (A and B) and removes data points where the difference
-    is greater than or equal to 5 ug/m^3 or 70%. For each sensor, it calculates the percentage of "good" data points,
+    is greater than or equal to 5 ug/m^3 or 70%, or greater than 2000. For each sensor, it calculates the percentage of "good" data points,
     which is defined as the percentage of data points that passed the threshold check. 
     It also calculates the maximum difference between the A and B channels,
     the mean signal strength (RSSI), and the maximum uptime for each sensor. 
