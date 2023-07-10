@@ -115,7 +115,7 @@ def get_file_list(root_path):
     Returns:
     - file_list: A list of file paths to Excel files in the specified directory, excluding any files in the exclude_list.
     """
-    file_list = list(root_path.iterdir())
+    file_list = list(root_path.glob('*.xlsx'))
     exclude_list = ('combined_summarized_xl.xlsx', 'combined_sheets_xl.xlsx')
     for filename in exclude_list:
         if os.path.exists(root_path / filename):
@@ -175,11 +175,14 @@ def main():
     root_path = Path(constants.MATRIX5) / f'{args.yr}-{str(args.mnth).zfill(2)}'
     if os.path.exists(root_path):
         file_list = get_file_list(root_path)
-        dfs = get_dfs(file_list)
-        write_xl(dfs, root_path)
+        if len(file_list) < 2:
+            print(f'{len(file_list)} Excel file(s) found in {root_path}, exiting...')
+            sys.exit(1)
+        else:
+            dfs = get_dfs(file_list)
+            write_xl(dfs, root_path)
     else:
-        print(f'Path does not exist: {root_path}')
-        print('Exiting...')
+        print(f'Path does not exist: {root_path}, exiting...')
         sys.exit(1)
 
 
