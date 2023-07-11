@@ -48,16 +48,19 @@ config = ConfigParser()
 config.read('config.ini')
 
 # Setup exception logging
-format_string = '%(name)s - %(asctime)s : %(message)s'
-logging.basicConfig(filename='pa_get_history_error.log',
-                    format = format_string)
+logger = logging.getLogger(__name__)  
+logger.setLevel(logging.WARNING)
+file_handler = logging.FileHandler('pa_get_history_error.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 session = requests.Session()
 retry = Retry(total=10, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
 PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
 if PURPLEAIR_READ_KEY == '':
-    logging.error('Error: PurpleAir API read key not set in config.ini. Exiting.')
+    logger.error('Error: PurpleAir API read key not set in config.ini. Exiting.')
     print('Error: PurpleAir API read key not set in config.ini. Exiting.')
     sys.exit(1)
 session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
@@ -70,7 +73,7 @@ scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     ]
 GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
 if GSPREAD_SERVICE_ACCOUNT_JSON_PATH == '':
-    logging.error('Error: Google Sheets service account JSON path is not set in config.ini. Exiting.')
+    logger.error('Error: Google Sheets service account JSON path is not set in config.ini. Exiting.')
     print('Google Sheets service account JSON path is not set in config.ini. Exiting.')
     sys.exit(1)
 creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
@@ -252,7 +255,7 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
         try:
             response = session.get(url)
         except requests.exceptions.RequestException as req_err:
-            logging.exception(f'Request exception: {req_err}')
+            logger.exception(f'Request exception: {req_err}')
             return pd.DataFrame()
         if response.ok:
             url_data = response.content
@@ -281,7 +284,7 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
                 df_list.append(df_temp)  # Append dataframe to the list
                 latest_end_timestamp = end_timestamp  # Update the latest end timestamp
         else:
-            logging.exception('get_data() response not ok')
+            logger.exception('get_data() response not ok')
             sleep(10)
         if len(df_list) > 0:
             df = pd.concat(df_list, ignore_index=True)  # Concatenate dataframes
@@ -289,7 +292,7 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
             df = df.sort_values('time_stamp')  # Sort by time_stamp
         else:
             df = pd.DataFrame()
-            logging.exception('get_data() df_list empty')
+            logger.exception('get_data() df_list empty')
             print('df_list empty')
     return df
 
@@ -329,13 +332,13 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                 spreadsheet = client.open(DOCUMENT_NAME)
                 google_account = config.get('google', 'google_account')
                 if google_account == '':
-                    logging.error('Error: Google account not set in config.ini, exiting...')
+                    logger.error('Error: Google account not set in config.ini, exiting...')
                     print('Error: Google account not set in config.ini, exiting...')
                     sys.exit(1)
                 spreadsheet.share(google_account, perm_type='user', role='writer')
             except gspread.exceptions.APIError as e:
                 attempts += 1
-                logging.exception('gspread error in write_data() attempt #{attempts} of {MAX_ATTEMPTS}')
+                logger.exception('gspread error in write_data() attempt #{attempts} of {MAX_ATTEMPTS}')
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
                     SLEEP_DURATION += 90
@@ -356,12 +359,12 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                 break
             except gspread.exceptions.APIError as e:
                 attempts += 1
-                logging.exception('gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
+                logger.exception('gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
                     SLEEP_DURATION += 90
                 else:
-                    logging.exception('gspread error in write_data() max attempts reached')
+                    logger.exception('gspread error in write_data() max attempts reached')
         try:
             sheet = spreadsheet.worksheet('Sheet1')
             spreadsheet.del_worksheet(sheet)
@@ -377,7 +380,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
             message = f'Created {output_pathname.name} in {output_pathname.parent}'
             print(message)
         except Exception as e:
-            logging.exception('write_data() error writing Excel file')
+            logger.exception('write_data() error writing Excel file')
     if output == 'x' or output == 'a':
         folder_name = f'{yr}-{str(mnth).zfill(2)}'
         if sys.platform == 'win32':
@@ -396,7 +399,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
             message = f'Created or updated {output_pathname.name} in {output_pathname.parent}'
             print(message)
         except Exception as e:
-            logging.exception('write_data() error writing Excel file')
+            logger.exception('write_data() error writing Excel file')
             print('Error writing Excel file')
 
 
