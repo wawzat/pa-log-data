@@ -240,7 +240,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
         None
     """
     MAX_ATTEMPTS: int = 4
-    attempts: int = 0/client
+    attempts: int = 0
     SLEEP_DURATION: int = 90
     while attempts < MAX_ATTEMPTS:
         try:
