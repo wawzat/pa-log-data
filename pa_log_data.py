@@ -37,6 +37,7 @@ file_handler.setFormatter(formatter)
 # add file handler to logger
 logger.addHandler(file_handler)
 
+# Setup requests session with retry
 session = requests.Session()
 retry = Retry(total=10, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
@@ -49,12 +50,6 @@ session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
 
-file_name: str = 'pa_log_test.csv'
-if sys.platform == 'win32':
-    output_pathname: str = Path(constants.MATRIX5, file_name)
-elif sys.platform == 'linux':
-    cwd: str = Path.cwd()
-    output_pathname: str = Path(cwd, file_name)
 # set the credentials for the Google Sheets service account
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
