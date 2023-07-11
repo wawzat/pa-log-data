@@ -333,6 +333,12 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                     print('Error: Google account not set in config.ini, exiting...')
                     sys.exit(1)
                 spreadsheet.share(google_account, perm_type='user', role='writer')
+            except gspread.exceptions.APIError as e:
+                attempts += 1
+                logging.exception('gspread error in write_data() attempt #{attempts} of {MAX_ATTEMPTS}')
+                if attempts < MAX_ATTEMPTS:
+                    sleep(SLEEP_DURATION)
+                    SLEEP_DURATION += 90
             try:
                 sheet = spreadsheet.worksheet(worksheet_name)
                 sheet.clear()
@@ -349,8 +355,8 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                 sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
                 break
             except gspread.exceptions.APIError as e:
-                logging.exception('gspread error in write_data()')
                 attempts += 1
+                logging.exception('gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
                     SLEEP_DURATION += 90
