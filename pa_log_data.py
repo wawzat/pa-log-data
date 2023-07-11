@@ -240,7 +240,7 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
         None
     """
     MAX_ATTEMPTS: int = 4
-    attempts: int = 0
+    attempts: int = 0/client
     SLEEP_DURATION: int = 90
     while attempts < MAX_ATTEMPTS:
         try:
@@ -253,8 +253,8 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
                 sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
             break
         except gspread.exceptions.APIError as e:
-            logger.exception('gspread error in write_data()')
             attempts += 1
+            logger.exception(f'gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
             if attempts < MAX_ATTEMPTS:
                 sleep(SLEEP_DURATION)
                 SLEEP_DURATION += 90
@@ -334,7 +334,7 @@ def process_data(DOCUMENT_NAME, client):
                 break
             except gspread.exceptions.APIError as e:
                 attempts += 1
-                message = f'process_data() gspread error attempt #{attempts}'
+                message = f'process_data() gspread error attempt #{attempts} of {MAX_ATTEMPTS}'
                 logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
@@ -444,7 +444,7 @@ def regional_stats(client, DOCUMENT_NAME):
                 break
             except gspread.exceptions.APIError as e:
                 attempts += 1
-                message = f'regional_stats() gspread error attempt #{attempts}'
+                message = f'regional_stats() gspread error attempt #{attempts} of {MAX_ATTEMPTS}'
                 logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
@@ -453,7 +453,7 @@ def regional_stats(client, DOCUMENT_NAME):
                     logger.exception('regional_stats() gspread error max attempts reached')
             except requests.exceptions.ConnectionError as e:
                 attempts += 1
-                message = f'regional_stats() requests error attempt #{attempts}'
+                message = f'regional_stats() requests error attempt #{attempts} of {MAX_ATTEMPTS}'
                 logger.exception(message)
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
