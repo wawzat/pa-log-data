@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230702
+# James S. Lucas - 20230711
 
 import sys
 import requests
@@ -38,7 +38,7 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 session = requests.Session()
-retry = Retry(connect=5, backoff_factor=1.0)
+retry = Retry(total=10, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
 PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
 if PURPLEAIR_READ_KEY == '':
@@ -48,6 +48,7 @@ if PURPLEAIR_READ_KEY == '':
 session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
+
 file_name: str = 'pa_log_test.csv'
 if sys.platform == 'win32':
     output_pathname: str = Path(constants.MATRIX5, file_name)
@@ -148,9 +149,8 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     cols: List[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
     try:
         response = session.get(url)
-        response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        logger.exception(f'get_data error: {e}')
+        logger.exception(f'get_data() error: {e}')
         df = pd.DataFrame()
         return df
     if response.ok:

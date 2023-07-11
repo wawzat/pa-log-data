@@ -20,7 +20,7 @@ The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20230707
+# James S. Lucas - 20230711
 
 import sys
 import os
@@ -53,7 +53,7 @@ logging.basicConfig(filename='pa_get_history_error.log',
                     format = format_string)
 
 session = requests.Session()
-retry = Retry(connect=5, backoff_factor=1.0)
+retry = Retry(total=10, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
 PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
 if PURPLEAIR_READ_KEY == '':
@@ -63,7 +63,6 @@ if PURPLEAIR_READ_KEY == '':
 session.headers.update({'X-API-Key': PURPLEAIR_READ_KEY})
 session.mount('http://', adapter)
 session.mount('https://', adapter)
-
 
 # set the credentials for the Google Sheets service account
 scope: List[str] = ['https://spreadsheets.google.com/feeds',
@@ -252,21 +251,8 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
         cols: List[str] = ['time_stamp', 'time_stamp_pacific', 'sensor_index', 'name'] + [col for col in params['fields'].split(',')] + ['pm25_epa'] + ['Ipm25']
         try:
             response = session.get(url)
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as http_err:
-            logging.exception(f'HTTP error {http_err}')
-            return pd.DataFrame()
-        except requests.exceptions.ConnectionError as conn_err:
-            logging.exception(f'Connection error {conn_err}')
-            return pd.DataFrame()
-        except requests.exceptions.Timeout as timeout_err:
-            logging.exception(f'Timeout error {timeout_err}')
-            return pd.DataFrame()
-        except requests.exceptions.TooManyRedirects as redir_err:
-            logging.exception(f'Too many redirects error {redir_err}')
-            return pd.DataFrame()
         except requests.exceptions.RequestException as req_err:
-            logging.exception(f'Other request exception {req_err}')
+            logging.exception(f'Request exception: {req_err}')
             return pd.DataFrame()
         if response.ok:
             url_data = response.content
