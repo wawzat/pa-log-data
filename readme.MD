@@ -86,7 +86,7 @@
 - I typically "Make a copy" from the Google Sheets Web UI and share it with the Google Sheets Account before deleting the original from the Google Service Account.
   
   
-  # xl_merge.py  
+# xl_merge.py  
     
 ## Python program to merge Excel files.  
   
@@ -95,3 +95,12 @@
 - This program merges all Excel files in a directory into a single Excel workbook.
 - The program assumes the file structure begins with the path defined in constants.py followed by a folder in yyyy-mm format.
 - Files to be excluded are hard coded in exclude_list.
+  
+
+# aqmd_get_data.py  
+    
+## Python program to scrape pollution data from the SCAQMD AQ Details - HistoricalData website for a given month and year.
+  
+### Notes:  
+  
+- The station to get data from is named in constants.py.
