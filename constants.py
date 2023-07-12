@@ -4,6 +4,9 @@ MATRIX5 = 'd:/Users/wawza/OneDrive/Documents/House/PurpleAir'
 # download directory
 DOWNLOAD_DIRECTORY = 'd:/Users/wawza/Downloads'
 
+# Edge webdriver location
+EDGE_WEBDRIVER_PATH = 'd:/Users/wawza/OneDrive/Documents/1_Programming/edge_webdriver/msedgedriver.exe'
+
 SCAQMD_SITE = 'https://xappprod.aqmd.gov/aqdetail/AirQuality/HistoricalData'
 SCAQMD_STATION = 'Lake Elsinore Area'
 
