@@ -5,6 +5,7 @@ MATRIX5 = 'd:/Users/wawza/OneDrive/Documents/House/PurpleAir'
 DOWNLOAD_DIRECTORY = 'd:/Users/wawza/Downloads'
 
 SCAQMD_SITE = 'https://xappprod.aqmd.gov/aqdetail/AirQuality/HistoricalData'
+SCAQMD_STATION = 'Lake Elsinore Area'
 
 LOCAL_REGION = 'TV'
 #           SW lon / lat            NE lon / lat
