@@ -90,7 +90,9 @@ def open_site(site):
     edgeOption.use_chromium = True
     edgeOption.add_argument('start-maximized')
     edgeOption.binary_location = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
-    s=service.Service(r'C:\Users\Administrator\Desktop\msedgedriver.exe')
+    s=service.Service(constants.EDGE_WEBDRIVER_PATH)
+    # The following line suppresses an error: usb_service_win.cc:415...
+    edgeOption.add_experimental_option('excludeSwitches', ['enable-logging'])
     driver = webdriver.Edge(service=s, options=edgeOption)
     driver.get(site)
     return driver
