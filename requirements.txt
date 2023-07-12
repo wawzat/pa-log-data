@@ -5,3 +5,4 @@ xlsxwriter
 requests
 urlib3
 tabulate
+selenium
