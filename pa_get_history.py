@@ -342,6 +342,8 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
                     SLEEP_DURATION += 90
+                else:
+                    logger.exception('gspread error in write_data() max attempts exceeded')
             try:
                 sheet = spreadsheet.worksheet(worksheet_name)
                 sheet.clear()
@@ -364,7 +366,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                     sleep(SLEEP_DURATION)
                     SLEEP_DURATION += 90
                 else:
-                    logger.exception('gspread error in write_data() max attempts reached')
+                    logger.exception('gspread error in write_data() max attempts exceeded')
         try:
             sheet = spreadsheet.worksheet('Sheet1')
             spreadsheet.del_worksheet(sheet)
