@@ -1,5 +1,10 @@
-#user_directory = ' '
+# user directory = ' '
 MATRIX5 = 'd:/Users/wawza/OneDrive/Documents/House/PurpleAir'
+
+# download directory
+DOWNLOAD_DIRECTORY = 'd:/Users/wawza/Downloads'
+
+SCAQMD_SITE = 'https://xappprod.aqmd.gov/aqdetail/AirQuality/HistoricalData'
 
 LOCAL_REGION = 'TV'
 #           SW lon / lat            NE lon / lat
