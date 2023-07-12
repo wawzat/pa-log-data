@@ -96,7 +96,7 @@ def open_site(site):
     return driver
 
 
-def get_data(driver, args, pollutant):
+def get_data(driver, args, station, pollutant):
     '''
     Scrapes the South Coast Air Quality Management District (SCAQMD) AQ Details - HistoricalData website for air pollutant data.
 
@@ -114,7 +114,7 @@ def get_data(driver, args, pollutant):
     pollutant_dropdown.select_by_visible_text(pollutant)
 
     station_dropdown = Select(driver.find_element('name', 'stationDropDownList'))
-    station_dropdown.select_by_visible_text('Lake Elsinore Area')
+    station_dropdown.select_by_visible_text(station)
 
     from_date_picker = driver.find_element('name', 'fdate')
     from_date_picker.clear()
@@ -154,7 +154,7 @@ def main():
     driver = open_site(constants.SCAQMD_SITE)
     pollutants = ('PM2.5', 'WD', 'WS', 'T', 'O3', 'NO2', 'CO')
     for pollutant in pollutants:
-        get_data(driver, args, pollutant)
+        get_data(driver, args, constants.SCAQMD_STATION, pollutant)
         move_data(args, pollutant)
         sleep(4)
     driver.quit()
