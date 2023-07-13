@@ -68,6 +68,20 @@ def get_arguments():
     return(args)
 
 
+def remove_download_data():
+    '''
+    Removes any previous leftover AQMD data files in the download directory.
+
+    Args:
+    None
+
+    Returns:
+    None
+    '''
+    for p in Path(constants.DOWNLOAD_DIRECTORY).glob("GridViewExport*.csv"):
+        p.unlink()
+
+
 def date_range(args):
     run_date = datetime.strptime(f'{args.mnth}/01/{args.yr}', '%m/%d/%Y')
     from_date = (run_date - timedelta(days=1)).strftime('%m/%d/%Y')
@@ -146,6 +160,7 @@ def move_data(args, pollutant):
     file_found = False
     attempts = 0
     max_attempts = 100
+    # Ensure file has completed downloading before moving it
     while not file_found and attempts < max_attempts:
         if Path(download_path / 'GridViewExport.csv').is_file():
             file_found = True
@@ -163,12 +178,13 @@ def move_data(args, pollutant):
 
 def main():
     args = get_arguments()
+    remove_download_data()
     driver = open_site(constants.SCAQMD_SITE)
     pollutants = ('PM2.5', 'WD', 'WS', 'T', 'O3', 'NO2', 'CO')
     for pollutant in pollutants:
         get_data(driver, args, constants.SCAQMD_STATION, pollutant)
         move_data(args, pollutant)
-        sleep(2)
+        sleep(1)
     driver.quit()
 
 
