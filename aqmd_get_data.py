@@ -83,6 +83,15 @@ def remove_download_data():
 
 
 def date_range(args):
+    '''
+    Calculates "from" and "to" dates that are the last day of the previous month and the first day of the following month for a given month and year.
+
+    Args:
+    args (argparse.Namespace): The argparse Namespace object containing the month and year arguments.
+
+    Returns:
+    tuple: A tuple containing the last day of the previous month and first day of the following month in the format '%m/%d/%Y'.
+    '''
     run_date = datetime.strptime(f'{args.mnth}/01/{args.yr}', '%m/%d/%Y')
     from_date = (run_date - timedelta(days=1)).strftime('%m/%d/%Y')
     to_date = (run_date + timedelta(days=calendar.monthrange(run_date.year, run_date.month)[1])).strftime('%m/%d/%Y')
