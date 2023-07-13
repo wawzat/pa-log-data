@@ -1,7 +1,7 @@
 '''
 Program that scrapes the South Coast Air Quality Management District (SCAQMD) AQ Details - HistoricalData website for air pollutant data.
 '''
-# James S. Lucas 20230712
+# James S. Lucas 20230713
 import os
 from selenium import webdriver
 from selenium.webdriver.edge import service
@@ -184,7 +184,7 @@ def main():
     for pollutant in pollutants:
         get_data(driver, args, constants.SCAQMD_STATION, pollutant)
         move_data(args, pollutant)
-        sleep(1)
+        sleep(.5)
     driver.quit()
 
 
