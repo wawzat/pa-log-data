@@ -127,9 +127,8 @@ def get_data(driver, args, station, pollutant):
     to_date_picker.send_keys(to_date)
 
     driver.find_element('name', 'searchVariButn').click()
-    sleep(2)
+    sleep(1)
     driver.find_element('name', 'toExcel').click()
-    sleep(3)
 
 
 def move_data(args, pollutant):
@@ -143,12 +142,23 @@ def move_data(args, pollutant):
     Returns:
     None
     '''
-    sleep(2)
     download_path = Path(constants.DOWNLOAD_DIRECTORY)
-    storage_folder = f'{args.yr}-{str(args.mnth).zfill(2)}'
-    storage_path = Path(constants.MATRIX5) / storage_folder
-    os.makedirs(storage_path, exist_ok=True)
-    shutil.move(download_path / 'GridViewExport.csv', storage_path / f'LE_REF_{pollutant}.csv')
+    file_found = False
+    attempts = 0
+    max_attempts = 100
+    while not file_found and attempts < max_attempts:
+        if Path(download_path / 'GridViewExport.csv').is_file():
+            file_found = True
+        else:
+            attempts += 1
+            sleep(.1)
+    if not file_found:
+        raise FileNotFoundError('Data file download not found')
+    else:
+        storage_folder = f'{args.yr}-{str(args.mnth).zfill(2)}'
+        storage_path = Path(constants.MATRIX5) / storage_folder
+        os.makedirs(storage_path, exist_ok=True)
+        shutil.move(download_path / 'GridViewExport.csv', storage_path / f'LE_REF_{pollutant}.csv')
 
 
 def main():
@@ -158,7 +168,7 @@ def main():
     for pollutant in pollutants:
         get_data(driver, args, constants.SCAQMD_STATION, pollutant)
         move_data(args, pollutant)
-        sleep(4)
+        sleep(2)
     driver.quit()
 
 
