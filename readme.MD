@@ -1,3 +1,5 @@
+# A collection of Python programs for logging and processing PurpleAir sensor data.
+  
 # pa_log_data.py
  
 ## Python program to periodically log PurpleAir sensor data to Google Sheets from the PurpleAir API for sensors within a defined rectangular area.
