@@ -43,7 +43,7 @@ cols_3 = ['altitude']
 cols_4 = ['rssi']
 cols_5 = ['uptime']
 cols_6 = ['humidity', 'temperature', 'pressure', 'voc']
-cols_7 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm2.5_10minute', 'pm10.0_atm_a', 'pm10.0_atm_b',
+cols_7 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
         'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a',  'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
         '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
 cols_8 = ['pm25_epa']
