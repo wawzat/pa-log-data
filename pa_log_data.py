@@ -327,6 +327,7 @@ def process_data(DOCUMENT_NAME, client):
             try:
                 in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
                 df = pd.DataFrame(in_sheet.get_all_records())
+                print(df.head())
                 break
             except gspread.exceptions.APIError as e:
                 attempts += 1
@@ -362,7 +363,8 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized['time_stamp_pacific'] = df_summarized['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
-        df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
+        df_summarized['pm2.5_10minute'] = pd.to_numeric(df_summarized['pm2.5_10minute'], errors='coerce').astype(float)
+        df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b', 'pm2.5_10minute'])
         df_summarized = df_summarized.fillna('')
         df_summarized = clean_data(df_summarized)
         df_summarized = format_data(df_summarized)
