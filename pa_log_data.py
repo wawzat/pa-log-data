@@ -327,7 +327,7 @@ def process_data(DOCUMENT_NAME, client):
             try:
                 in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
                 df = pd.DataFrame(in_sheet.get_all_records())
-                print(df.head())
+                df.to_excel('raw_data.xlsx')
                 break
             except gspread.exceptions.APIError as e:
                 attempts += 1
