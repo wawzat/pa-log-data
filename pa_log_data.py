@@ -74,7 +74,7 @@ def retry(max_attempts, delay=90, exception=(Exception,)):
                 except exception as e:
                     adjusted_delay = delay + 90 * attempts
                     attempts += 1
-                    logger.exception(f'Error in {func.__name__}: attempt #{attempts} of {MAX_ATTEMPTS}')
+                    logger.exception(f'Error in {func.__name__}: attempt #{attempts} of {max_attempts}')
                     sleep(adjusted_delay)
             logger.exception(f'Error in {func.__name__}: max of {max_attempts} attempts reached')
         return wrapper
