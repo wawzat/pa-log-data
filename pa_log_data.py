@@ -185,7 +185,25 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
 def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
     #in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
     #df = pd.DataFrame(in_sheet.get_all_records())
-    raise gspread.exceptions.APIError('test')
+    
+    response = '''{
+    "status": 400,
+    "reason": "Bad Request",
+    "message": "Invalid request",
+    "headers": {
+        "Content-Type": "application/json",
+        "Server": "gspread"
+    },
+    "body": {
+        "error": {
+        "code": 400,
+        "message": "Invalid request",
+        "status": "INVALID_REQUEST"
+        }
+    }
+    }'''
+    raise gspread.exceptions.APIError(response)
+    df = pd.DataFrame()
     return df
 
 
