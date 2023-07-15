@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230713
+# James S. Lucas - 20230715
 
 import sys
 import requests
@@ -507,13 +507,12 @@ def main():
                 regional_start: datetime = datetime.now()
             if process_et > constants.PROCESS_INTERVAL_DURATION:
                 df = process_data(constants.DOCUMENT_NAME, client)
-                sys.exit(0)
                 process_start: datetime = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, constants.DOCUMENT_NAME, constants.OUT_WORKSHEET_HEALTH_NAME)
                     regional_stats(client, constants.DOCUMENT_NAME)
         except KeyboardInterrupt:
-            sys.exit()
+            sys.exit(0)
 
 
 if __name__ == "__main__":
