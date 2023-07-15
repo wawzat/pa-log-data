@@ -470,10 +470,10 @@ def main():
                         write_mode: str = 'append'
                         write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(regional_key)[1], write_mode)
                     sleep(10)
+                sys.exit(0)
                 regional_start: datetime = datetime.now()
             if process_et > constants.PROCESS_INTERVAL_DURATION:
                 df = process_data(constants.DOCUMENT_NAME, client)
-                sys.exit(0)
                 process_start: datetime = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, constants.DOCUMENT_NAME, constants.OUT_WORKSHEET_HEALTH_NAME)
