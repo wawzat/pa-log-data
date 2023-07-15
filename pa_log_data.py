@@ -64,6 +64,22 @@ client = gspread.authorize(creds)
 client.set_timeout(240)
 
 
+def retry(max_attempts, delay=90, exception=(Exception,)):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            attempts = 0
+            while attempts < max_attempts:
+                try:
+                    return func(*args, **kwargs)
+                except exception as e:
+                    attempts += 1
+                    logger.exception(f'gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
+                    sleep(delay + 90 * attempts)
+            logger.exception('gspread error in write_data() max of {max_attepts} attempts reached')
+        return wrapper
+    return decorator
+
+
 def status_update(local_et, regional_et, process_et):
     """
     A function that calculates the time remaining for each interval and prints it in a table format.
@@ -216,7 +232,7 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df[constants.cols]
     return df
 
-
+@retry(max_attempts=4, delay=90, exception=(gspread.exceptions.APIError))
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     """
     Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
@@ -234,27 +250,13 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     Returns:
         None
     """
-    MAX_ATTEMPTS: int = 4
-    attempts: int = 0
-    SLEEP_DURATION: int = 90
-    while attempts < MAX_ATTEMPTS:
-        try:
-            # open the Google Sheets output worksheet and write the data
-            sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
-            if write_mode == 'append':
-                sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
-            elif write_mode == 'update':
-                sheet.clear()
-                sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
-            break
-        except gspread.exceptions.APIError as e:
-            attempts += 1
-            logger.exception(f'gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
-            if attempts < MAX_ATTEMPTS:
-                sleep(SLEEP_DURATION)
-                SLEEP_DURATION += 90
-            else:
-                logger.exception('gspread error in write_data() max attempts reached')
+    # open the Google Sheets output worksheet and write the data
+    sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
+    if write_mode == 'append':
+        sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
+    elif write_mode == 'update':
+        sheet.clear()
+        sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
 
 
 def current_process(df):
