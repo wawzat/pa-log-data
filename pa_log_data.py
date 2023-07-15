@@ -77,6 +77,8 @@ def retry(max_attempts, delay=90, exception=(Exception,)):
                     logger.exception(f'Error in {func.__name__}: attempt #{attempts} of {max_attempts}')
                     sleep(adjusted_delay)
             logger.exception(f'Error in {func.__name__}: max of {max_attempts} attempts reached')
+            print(f'Error in {func.__name__}: max of {max_attempts} attempts reached')
+            sys.exit(1)
         return wrapper
     return decorator
 
@@ -183,15 +185,15 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
 
 @retry(max_attempts=4, delay=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
 def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
-    #in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
-    #df = pd.DataFrame(in_sheet.get_all_records())
+    in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
+    df = pd.DataFrame(in_sheet.get_all_records())
     
     # Simulating a response object
-    response = requests.Response()
-    response.status_code = 404
-    response._content = b'{"error": "Not found"}'
-    raise gspread.exceptions.APIError(response)
-    df = pd.DataFrame()
+    #response = requests.Response()
+    #response.status_code = 404
+    #response._content = b'{"error": "Not found"}'
+    #raise gspread.exceptions.APIError(response)
+    #df = pd.DataFrame()
     return df
 
 
@@ -481,7 +483,6 @@ def main():
                 regional_start: datetime = datetime.now()
             if process_et > constants.PROCESS_INTERVAL_DURATION:
                 df = process_data(constants.DOCUMENT_NAME, client)
-                sys.exit(0)
                 process_start: datetime = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, constants.DOCUMENT_NAME, constants.OUT_WORKSHEET_HEALTH_NAME)
