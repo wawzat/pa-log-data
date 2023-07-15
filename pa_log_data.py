@@ -470,7 +470,6 @@ def main():
                         write_mode: str = 'append'
                         write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(regional_key)[1], write_mode)
                     sleep(10)
-                sys.exit(0)
                 regional_start: datetime = datetime.now()
             if process_et > constants.PROCESS_INTERVAL_DURATION:
                 df = process_data(constants.DOCUMENT_NAME, client)
