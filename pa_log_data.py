@@ -76,7 +76,7 @@ def retry(max_attempts, delay=90, exception=(Exception,)):
                     attempts += 1
                     logger.exception(f'Error in {func.__name__}: attempt #{attempts} of {MAX_ATTEMPTS}')
                     sleep(adjusted_delay)
-            logger.exception(f'Error in {func.__name__}: max of {max_attepts} attempts reached')
+            logger.exception(f'Error in {func.__name__}: max of {max_attempts} attempts reached')
         return wrapper
     return decorator
 
@@ -185,7 +185,7 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
 def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
     #in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
     #df = pd.DataFrame(in_sheet.get_all_records())
-    raise gspread.exceptions.APIError
+    raise gspread.exceptions.APIError('test')
     return df
 
 
