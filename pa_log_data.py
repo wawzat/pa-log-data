@@ -190,7 +190,7 @@ def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
     response = requests.Response()
     response.status_code = 404
     response._content = b'{"error": "Not found"}'
-    raise gspread.exceptions.APIError('Test', response)
+    raise gspread.exceptions.APIError(response)
     df = pd.DataFrame()
     return df
 
