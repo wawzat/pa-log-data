@@ -72,10 +72,11 @@ def retry(max_attempts, delay=90, exception=(Exception,)):
                 try:
                     return func(*args, **kwargs)
                 except exception as e:
+                    adjusted_delay = delay + 90 * attempts
                     attempts += 1
-                    logger.exception(f'gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
-                    sleep(delay + 90 * attempts)
-            logger.exception('gspread error in write_data() max of {max_attepts} attempts reached')
+                    logger.exception(f'Error in {func.__name__}: attempt #{attempts} of {MAX_ATTEMPTS}')
+                    sleep(adjusted_delay)
+            logger.exception(f'Error in {func.__name__}: max of {max_attepts} attempts reached')
         return wrapper
     return decorator
 
@@ -182,8 +183,9 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
 
 @retry(max_attempts=4, delay=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
 def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
-    in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
-    df = pd.DataFrame(in_sheet.get_all_records())
+    #in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
+    #df = pd.DataFrame(in_sheet.get_all_records())
+    raise gspread.exceptions.APIError
     return df
 
 
@@ -473,6 +475,7 @@ def main():
                 regional_start: datetime = datetime.now()
             if process_et > constants.PROCESS_INTERVAL_DURATION:
                 df = process_data(constants.DOCUMENT_NAME, client)
+                sys.exit(0)
                 process_start: datetime = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, constants.DOCUMENT_NAME, constants.OUT_WORKSHEET_HEALTH_NAME)
