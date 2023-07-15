@@ -186,23 +186,11 @@ def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
     #in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
     #df = pd.DataFrame(in_sheet.get_all_records())
     
-    response = '''{
-    "status": 400,
-    "reason": "Bad Request",
-    "message": "Invalid request",
-    "headers": {
-        "Content-Type": "application/json",
-        "Server": "gspread"
-    },
-    "body": {
-        "error": {
-        "code": 400,
-        "message": "Invalid request",
-        "status": "INVALID_REQUEST"
-        }
-    }
-    }'''
-    raise gspread.exceptions.APIError(response)
+    # Simulating a response object
+    response = requests.Response()
+    response.status_code = 404
+    response._content = b'{"error": "Not found"}'
+    raise gspread.exceptions.APIError('Test', response)
     df = pd.DataFrame()
     return df
 
