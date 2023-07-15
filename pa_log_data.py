@@ -129,7 +129,7 @@ def elapsed_time(local_start, regional_start, process_start, status_start):
     return local_et, regional_et, process_et, status_et
 
 
-def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
+def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     """
     A function that queries the PurpleAir API for sensor data within a given bounding box and time frame.
 
@@ -161,7 +161,7 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     try:
         response = session.get(url)
     except requests.exceptions.RequestException as e:
-        logger.exception(f'get_data() error: {e}')
+        logger.exception(f'get_pa_data() error: {e}')
         df = pd.DataFrame()
         return df
     if response.ok:
@@ -176,7 +176,14 @@ def get_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         df = df[cols]
     else:
         df = pd.DataFrame()
-        logger.exception('get_data() response not ok')
+        logger.exception('get_pa_data() response not ok')
+    return df
+
+
+@retry(max_attempts=4, delay=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
+def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
+    in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
+    df = pd.DataFrame(in_sheet.get_all_records())
     return df
 
 
@@ -321,23 +328,7 @@ def process_data(DOCUMENT_NAME, client):
         # open the Google Sheets input worksheet and read in the data
         in_worksheet_name: str = k
         out_worksheet_name: str = k + ' Proc'
-        MAX_ATTEMPTS: int = 4
-        attempts: int = 0
-        SLEEP_DURATION: int = 90
-        while attempts < MAX_ATTEMPTS:
-            try:
-                in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
-                df = pd.DataFrame(in_sheet.get_all_records())
-                break
-            except gspread.exceptions.APIError as e:
-                attempts += 1
-                message = f'process_data() gspread error attempt #{attempts} of {MAX_ATTEMPTS}'
-                logger.exception(message)
-                if attempts < MAX_ATTEMPTS:
-                    sleep(SLEEP_DURATION)
-                    SLEEP_DURATION += 90
-                else:
-                    logger.exception('process_data() gspread error max attempts reached')
+        df = get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name)
         if constants.LOCAL_REGION == k:
             # Save the dataframe for later use by the regional_stats() and sensor_health() functions
             df_local = df.copy()
@@ -364,7 +355,6 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized['pm2.5_atm_a'] = pd.to_numeric(df_summarized['pm2.5_atm_a'], errors='coerce').astype(float)
         df_summarized['pm2.5_atm_b'] = pd.to_numeric(df_summarized['pm2.5_atm_b'], errors='coerce').astype(float)
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
-        #df_summarized = df_summarized.fillna('')
         df_summarized.replace('', 0, inplace=True)
         df_summarized = clean_data(df_summarized)
         df_summarized = format_data(df_summarized)
@@ -425,42 +415,16 @@ def regional_stats(client, DOCUMENT_NAME):
     This function retrieves air quality data from a Google Sheets document for each region specified in the BBOX_DICT dictionary.
     It calculates the mean and maximum values for each region and writes the output to a specified worksheet in the same Google Sheets document.
     """
-    data_list = []
+    dfs = []
     write_mode: str = 'update'
     out_worksheet_regional_name: str = 'Regional'
     df_regional_stats = pd.DataFrame(columns=['Region', 'Mean', 'Max'])
-    MAX_ATTEMPTS: int = 4
-    attempts: int = 0
-    SLEEP_DURATION: int = 90
     for k, v in constants.BBOX_DICT.items():
         worksheet_name = v[1] + ' Proc'
-        while attempts < MAX_ATTEMPTS:
-            try:
-                # open the Google Sheets input worksheet
-                in_sheet = client.open(DOCUMENT_NAME).worksheet(worksheet_name)
-                data = in_sheet.get_all_records()
-                break
-            except gspread.exceptions.APIError as e:
-                attempts += 1
-                message = f'regional_stats() gspread error attempt #{attempts} of {MAX_ATTEMPTS}'
-                logger.exception(message)
-                if attempts < MAX_ATTEMPTS:
-                    sleep(SLEEP_DURATION)
-                    SLEEP_DURATION += 90
-                else:
-                    logger.exception('regional_stats() gspread error max attempts reached')
-            except requests.exceptions.ConnectionError as e:
-                attempts += 1
-                message = f'regional_stats() requests error attempt #{attempts} of {MAX_ATTEMPTS}'
-                logger.exception(message)
-                if attempts < MAX_ATTEMPTS:
-                    sleep(SLEEP_DURATION)
-                    SLEEP_DURATION += 90
-                else:
-                    logger.exception('regional_stats() requests error max attempts reached')
-        if len(data) > 0:
-            data_list.append(data) 
-            df_combined = pd.concat([pd.DataFrame(data) for data in data_list])
+        df = get_gsheet_data(client, DOCUMENT_NAME, worksheet_name)
+        if len(dfs) > 0:
+            dfs.append(df) 
+            df_combined = pd.concat([df for df in dfs])
             df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
             df_combined = df_combined.dropna(subset=['Ipm25'])
             df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
@@ -468,7 +432,7 @@ def regional_stats(client, DOCUMENT_NAME):
             max_value = df_combined['Ipm25'].max().round(2)
             df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
             df_combined = pd.DataFrame()
-            data_list = []
+            dfs = []
             sleep(90)
         write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
 
@@ -476,7 +440,7 @@ def regional_stats(client, DOCUMENT_NAME):
 def main():
     five_min_ago: datetime = datetime.now() - timedelta(minutes=5)
     for k, v in constants.BBOX_DICT.items():
-        df = get_data(five_min_ago, constants.BBOX_DICT.get(k)[0])
+        df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(k)[0])
         if len(df.index) > 0:
             write_mode = 'append'
             write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode)
@@ -490,7 +454,7 @@ def main():
             if status_et >= constants.STATUS_INTERVAL_DURATION:
                 status_start = status_update(local_et, regional_et, process_et)
             if local_et >= constants.LOCAL_INTERVAL_DURATION:
-                df_local = get_data(local_start, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0])
+                df_local = get_pa_data(local_start, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0])
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
                     write_data(df_local, client, constants.DOCUMENT_NAME, constants.LOCAL_WORKSHEET_NAME, write_mode)
@@ -501,7 +465,7 @@ def main():
                 local_start: datetime = datetime.now()
             if regional_et > constants.REGIONAL_INTERVAL_DURATION:
                 for regional_key in constants.REGIONAL_KEYS:
-                    df = get_data(regional_start, constants.BBOX_DICT.get(regional_key)[0]) 
+                    df = get_pa_data(regional_start, constants.BBOX_DICT.get(regional_key)[0]) 
                     if len(df.index) > 0:
                         write_mode: str = 'append'
                         write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(regional_key)[1], write_mode)
@@ -509,6 +473,7 @@ def main():
                 regional_start: datetime = datetime.now()
             if process_et > constants.PROCESS_INTERVAL_DURATION:
                 df = process_data(constants.DOCUMENT_NAME, client)
+                sys.exit(0)
                 process_start: datetime = datetime.now()
                 if len(df.index) > 0:
                     sensor_health(client, df, constants.DOCUMENT_NAME, constants.OUT_WORKSHEET_HEALTH_NAME)
