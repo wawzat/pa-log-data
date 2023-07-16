@@ -64,7 +64,22 @@ client = gspread.authorize(creds)
 client.set_timeout(240)
 
 
-def retry(max_attempts, delay=90, exception=(Exception,)):
+def retry(max_attempts=3, delay=2, escalation=10, exception=(Exception,)):
+    """
+    A decorator function that retries a function call a specified number of times if it raises a specified exception.
+
+    Args:
+        max_attempts (int): The maximum number of attempts to retry the function call.
+        delay (int): The initial delay in seconds before the first retry.
+        escalation (int): The amount of time in seconds to increase the delay by for each subsequent retry.
+        exception (tuple): A tuple of exceptions to catch and retry on.
+
+    Returns:
+        The decorated function.
+
+    Raises:
+        The same exception that the decorated function raises if the maximum number of attempts is reached.
+    """
     def decorator(func):
         def wrapper(*args, **kwargs):
             attempts = 0
@@ -72,12 +87,13 @@ def retry(max_attempts, delay=90, exception=(Exception,)):
                 try:
                     return func(*args, **kwargs)
                 except exception as e:
-                    adjusted_delay = delay + 90 * attempts
+                    adjusted_delay = delay + escalation * attempts
                     attempts += 1
-                    logger.exception(f'Error in {func.__name__}: attempt #{attempts} of {max_attempts}')
-                    sleep(adjusted_delay)
+                    logger.exception(f'Error in {func.__name__}(): attempt #{attempts} of {max_attempts}')
+                    if attempts < max_attempts:
+                        sleep(adjusted_delay)
             logger.exception(f'Error in {func.__name__}: max of {max_attempts} attempts reached')
-            print(f'Error in {func.__name__}: max of {max_attempts} attempts reached')
+            print(f'Error in {func.__name__}(): max of {max_attempts} attempts reached')
             sys.exit(1)
         return wrapper
     return decorator
@@ -183,17 +199,21 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     return df
 
 
-@retry(max_attempts=4, delay=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
+@retry(max_attempts=4, delay=90, escalation=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
 def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
+    """
+    Retrieves data from a Google Sheet specified by the DOCUMENT_NAME and in_worksheet_name parameters.
+
+    Args:
+        client (gspread.client.Client): The authorized Google Sheets API client.
+        DOCUMENT_NAME (str): The name of the Google Sheet document.
+        in_worksheet_name (str): The name of the worksheet within the Google Sheet document.
+
+    Returns:
+        A pandas DataFrame containing the data from the specified worksheet.
+    """
     in_sheet = client.open(DOCUMENT_NAME).worksheet(in_worksheet_name)
     df = pd.DataFrame(in_sheet.get_all_records())
-    
-    # Simulating a response object
-    #response = requests.Response()
-    #response.status_code = 404
-    #response._content = b'{"error": "Not found"}'
-    #raise gspread.exceptions.APIError(response)
-    #df = pd.DataFrame()
     return df
 
 
@@ -249,20 +269,17 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df[constants.cols]
     return df
 
-@retry(max_attempts=4, delay=90, exception=(gspread.exceptions.APIError))
+@retry(max_attempts=4, delay=90, escalation=90, exception=(gspread.exceptions.APIError))
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     """
-    Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
+    Writes the input DataFrame to a Google Sheets worksheet.
 
     Args:
-        df (pd.DataFrame): The DataFrame containing the data to be written.
-        client (gspread.client.Client): A client object for accessing the Google Sheets API.
-        DOCUMENT_NAME (str): The name of the Google Sheets document to write to.
-        worksheet_name (str): The name of the worksheet to write the data to.
-        write_mode (str): The mode for writing the data to the worksheet. Either "append" or "update".
-
-    Raises:
-        Exception: If an error occurs during the writing process.
+        df (pd.DataFrame): The DataFrame to be written to the worksheet.
+        client (gspread.client.Client): The authorized Google Sheets API client.
+        DOCUMENT_NAME (str): The name of the Google Sheets document.
+        worksheet_name (str): The name of the worksheet to write to.
+        write_mode (str): The write mode to use. Can be 'append' or 'update'.
 
     Returns:
         None
