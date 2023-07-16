@@ -504,6 +504,7 @@ def main():
                 if len(df.index) > 0:
                     sensor_health(client, df, constants.DOCUMENT_NAME, constants.OUT_WORKSHEET_HEALTH_NAME)
                     regional_stats(client, constants.DOCUMENT_NAME)
+                    sys.exit(0)
         except KeyboardInterrupt:
             sys.exit(0)
 
