@@ -449,19 +449,19 @@ def regional_stats(client, DOCUMENT_NAME):
     for k, v in constants.BBOX_DICT.items():
         worksheet_name = v[1] + ' Proc'
         df = get_gsheet_data(client, DOCUMENT_NAME, worksheet_name)
-        if len(dfs) > 0:
+        if len(df) > 0:
             dfs.append(df) 
-            df_combined = pd.concat([df for df in dfs])
-            df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
-            df_combined = df_combined.dropna(subset=['Ipm25'])
-            df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
-            mean_value = df_combined['Ipm25'].mean().round(2)
-            max_value = df_combined['Ipm25'].max().round(2)
-            df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
-            df_combined = pd.DataFrame()
-            dfs = []
-            sleep(90)
-        write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
+    df_combined = pd.concat([df for df in dfs])
+    df_combined['Ipm25'] = pd.to_numeric(df_combined['Ipm25'], errors='coerce')
+    df_combined = df_combined.dropna(subset=['Ipm25'])
+    df_combined['Ipm25'] = df_combined['Ipm25'].astype(float)
+    mean_value = df_combined['Ipm25'].mean().round(2)
+    max_value = df_combined['Ipm25'].max().round(2)
+    df_regional_stats.loc[len(df_regional_stats)] = [v[2], mean_value, max_value]
+    df_combined = pd.DataFrame()
+    dfs = []
+    sleep(90)
+    write_data(df_regional_stats, client, DOCUMENT_NAME, out_worksheet_regional_name, write_mode)
 
 
 def main():
