@@ -1,11 +1,11 @@
 # user directory = ' '
-MATRIX5 = 'd:/Users/wawza/OneDrive/Documents/House/PurpleAir'
+MATRIX5 = 'd:/Users/wawzat/OneDrive/Documents/House/PurpleAir'
 
 # download directory
-DOWNLOAD_DIRECTORY = 'd:/Users/wawza/Downloads'
+DOWNLOAD_DIRECTORY = 'd:/Users/wawzat/Downloads'
 
 # Edge webdriver location
-EDGE_WEBDRIVER_PATH = 'd:/Users/wawza/OneDrive/Documents/1_Programming/edge_webdriver/msedgedriver.exe'
+EDGE_WEBDRIVER_PATH = 'd:/Users/wawzat/OneDrive/Documents/1_Programming/edge_webdriver/msedgedriver.exe'
 
 SCAQMD_SITE = 'https://xappprod.aqmd.gov/aqdetail/AirQuality/HistoricalData'
 SCAQMD_STATION = 'Lake Elsinore Area'
