@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230715
+# James S. Lucas - 20230724
 
 import sys
 import requests
@@ -111,7 +111,6 @@ def status_update(local_et, regional_et, process_et):
     Returns:
         A datetime object representing the current time.
     """
-
     local_minutes = int((constants.LOCAL_INTERVAL_DURATION - local_et) / 60)
     local_seconds = int((constants.LOCAL_INTERVAL_DURATION - local_et) % 60)
     regional_minutes = int((constants.REGIONAL_INTERVAL_DURATION - regional_et) / 60)
@@ -269,6 +268,7 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df[constants.cols]
     return df
 
+
 @retry(max_attempts=4, delay=90, escalation=90, exception=(gspread.exceptions.APIError))
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     """
@@ -370,7 +370,7 @@ def process_data(DOCUMENT_NAME, client):
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
-        )
+            )
         df = df.set_index('time_stamp')
         df[constants.cols_6] = df[constants.cols_6].replace('', 0)
         df[constants.cols_6] = df[constants.cols_6].astype(float)
