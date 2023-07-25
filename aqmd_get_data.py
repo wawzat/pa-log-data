@@ -1,7 +1,7 @@
 '''
 Program that scrapes the South Coast Air Quality Management District (SCAQMD) AQ Details - HistoricalData website for air pollutant data.
 '''
-# James S. Lucas 20230713
+# James S. Lucas 20230725
 import os
 from selenium import webdriver
 from selenium.webdriver.edge import service
@@ -154,18 +154,19 @@ def get_data(driver, args, station, pollutant):
     driver.find_element('name', 'toExcel').click()
 
 
-def move_data(args, pollutant):
-    '''
-    Moves the downloaded CSV file to the appropriate storage folder.
+def check_download_exists(download_path):
+    """
+    The scraper is supposed to download a CSV file named 'GridViewExport.csv' to the specified download path.
+    This function checks if the file 'GridViewExport.csv' exists (has succesfully finished downloading).
+    It will attempt to check for the file a maximum of 100 times, with a 0.1 second delay between each attempt.
+    If the file is not found after all attempts, it raises a FileNotFoundError.
 
-    Args:
-    args (argparse.Namespace): The arguments parsed from the command line.
-    pollutant (str): The name of the pollutant to be scraped.
+    Parameters:
+    download_path (Path): The path where the file is expected to be downloaded.
 
     Returns:
-    None
-    '''
-    download_path = Path(constants.DOWNLOAD_DIRECTORY)
+    file_found (bool): True if the file is found, False otherwise.
+    """
     file_found = False
     attempts = 0
     max_attempts = 100
@@ -178,7 +179,23 @@ def move_data(args, pollutant):
             sleep(.1)
     if not file_found:
         raise FileNotFoundError('Data file download not found')
-    else:
+    return file_found
+
+
+def move_data(args, pollutant):
+    '''
+    Moves the downloaded CSV file to the appropriate storage folder.
+
+    Args:
+    args (argparse.Namespace): The arguments parsed from the command line.
+    pollutant (str): The name of the pollutant to be scraped.
+
+    Returns:
+    None
+    '''
+    download_path = Path(constants.DOWNLOAD_DIRECTORY)
+    download_file_exists = check_download_exists(download_path)
+    if download_file_exists:
         storage_folder = f'{args.yr}-{str(args.mnth).zfill(2)}'
         storage_path = Path(constants.MATRIX5) / storage_folder
         os.makedirs(storage_path, exist_ok=True)
