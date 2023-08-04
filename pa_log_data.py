@@ -269,7 +269,7 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@retry(max_attempts=4, delay=90, escalation=90, exception=(gspread.exceptions.APIError))
+@retry(max_attempts=4, delay=90, escalation=90, exception=(gspread.exceptions.APIError, requests.exceptions.ReadTimeout))
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     """
     Writes the input DataFrame to a Google Sheets worksheet.
