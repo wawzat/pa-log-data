@@ -1,7 +1,7 @@
 '''
 Program that scrapes the South Coast Air Quality Management District (SCAQMD) AQ Details - HistoricalData website for air pollutant data.
 '''
-# James S. Lucas 20230725
+# James S. Lucas 20230810
 import os
 from selenium import webdriver
 from selenium.webdriver.edge import service
