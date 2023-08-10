@@ -68,19 +68,6 @@ def get_arguments():
     return(args)
 
 
-def print_message(message):
-    '''
-    Prints a message to the console.
-
-    Args:
-    message (str): The message to be printed.
-
-    Returns:
-    None
-    '''
-    print(message)
-
-
 def remove_download_data():
     '''
     Removes any previous leftover AQMD data files in the download directory.
@@ -224,7 +211,7 @@ def main():
     for pollutant in pollutants:
         get_data(driver, args, constants.SCAQMD_STATION, pollutant)
         move_data(args, pollutant)
-        print_message(f'{pollutant} data downloaded for {args.mnth}/{args.yr}')
+        print(f'{pollutant} data downloaded for {args.mnth}/{args.yr}')
         sleep(.4)
     driver.quit()
 
