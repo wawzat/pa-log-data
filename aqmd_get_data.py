@@ -68,6 +68,19 @@ def get_arguments():
     return(args)
 
 
+def print_message(message):
+    '''
+    Prints a message to the console.
+
+    Args:
+    message (str): The message to be printed.
+
+    Returns:
+    None
+    '''
+    print(message)
+
+
 def remove_download_data():
     '''
     Removes any previous leftover AQMD data files in the download directory.
@@ -111,7 +124,8 @@ def open_site(site):
     edgeOption = webdriver.EdgeOptions()
     edgeOption.add_experimental_option('detach', True)
     edgeOption.use_chromium = True
-    edgeOption.add_argument('start-maximized')
+    edgeOption.add_argument('--headless=new')
+    #edgeOption.add_argument('start-maximized')
     edgeOption.binary_location = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
     s=service.Service(constants.EDGE_WEBDRIVER_PATH)
     # The following line suppresses an error: usb_service_win.cc:415...
@@ -210,7 +224,8 @@ def main():
     for pollutant in pollutants:
         get_data(driver, args, constants.SCAQMD_STATION, pollutant)
         move_data(args, pollutant)
-        sleep(.5)
+        print_message(f'{pollutant} data downloaded for {args.mnth}/{args.yr}')
+        sleep(.4)
     driver.quit()
 
 
