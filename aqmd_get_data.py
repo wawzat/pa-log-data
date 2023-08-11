@@ -112,6 +112,7 @@ def open_site(site):
     edgeOption.add_experimental_option('detach', True)
     edgeOption.use_chromium = True
     edgeOption.add_argument('--headless=new')
+    edgeOption.add_argument("--guest")
     #edgeOption.add_argument('start-maximized')
     edgeOption.binary_location = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
     s=service.Service(constants.EDGE_WEBDRIVER_PATH)
