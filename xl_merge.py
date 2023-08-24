@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
 Combine and merge multiple spreadsheets into one.
+The base path to the files is defined in constants.py STORAGE_ROOT_PATH.
+The folder with the files is in the format YYYY-MM.
 """
 # James S. Lucas - 20230709
 
@@ -171,7 +173,7 @@ def write_xl(dfs, root_path):
 
 def main():
     args = get_arguments()
-    root_path = Path(constants.MATRIX5) / f'{args.yr}-{str(args.mnth).zfill(2)}'
+    root_path = Path(constants.STORAGE_ROOT_PATH) / f'{args.yr}-{str(args.mnth).zfill(2)}'
     if os.path.exists(root_path):
         file_list = get_file_list(root_path)
         if len(file_list) < 2:

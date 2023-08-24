@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230724
+# James S. Lucas - 20230822
 
 import sys
 import requests
@@ -10,7 +10,6 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 import json
 import pandas as pd
-from pathlib import Path
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 from datetime import datetime, timedelta

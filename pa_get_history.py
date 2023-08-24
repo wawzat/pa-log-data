@@ -374,7 +374,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
             pass
     if output == 'c' or output == 'a':
         if sys.platform == 'win32':
-            output_pathname = Path(constants.MATRIX5) / f'{BASE_OUTPUT_FILE_NAME}.csv'
+            output_pathname = Path(constants.STORAGE_ROOT_PATH) / f'{BASE_OUTPUT_FILE_NAME}.csv'
         elif sys.platform == 'linux':
             output_pathname = Path.cwd() / f'{BASE_OUTPUT_FILE_NAME}.csv'
         try:
@@ -386,8 +386,8 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
     if output == 'x' or output == 'a':
         folder_name = f'{yr}-{str(mnth).zfill(2)}'
         if sys.platform == 'win32':
-            os.makedirs(Path(constants.MATRIX5) / folder_name, exist_ok=True)
-            output_pathname = Path(constants.MATRIX5) / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
+            os.makedirs(Path(constants.STORAGE_ROOT_PATH) / folder_name, exist_ok=True)
+            output_pathname = Path(constants.STORAGE_ROOT_PATH) / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
         elif sys.platform == 'linux':
             output_pathname = Path.cwd() / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
         try:

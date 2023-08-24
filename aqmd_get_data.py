@@ -200,7 +200,7 @@ def move_data(args, pollutant):
     download_file_exists = check_download_exists(download_path)
     if download_file_exists:
         storage_folder = f'{args.yr}-{str(args.mnth).zfill(2)}'
-        storage_path = Path(constants.MATRIX5) / storage_folder
+        storage_path = Path(constants.STORAGE_ROOT_PATH) / storage_folder
         os.makedirs(storage_path, exist_ok=True)
         shutil.move(download_path / 'GridViewExport.csv', storage_path / f'LE_REF_{pollutant}.csv')
 

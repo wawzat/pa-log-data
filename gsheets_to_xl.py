@@ -233,7 +233,7 @@ def sheet_to_xl(spreadsheet, all_data):
     year = name_parts[2]
     month = name_parts[3]
     folder_name = f'{year}-{month.zfill(2)}'
-    full_path = pathlib.Path(constants.MATRIX5, folder_name)
+    full_path = pathlib.Path(constants.STORAGE_ROOT_PATH, folder_name)
     os.makedirs(full_path, exist_ok=True)
     file_name = full_path / 'combined_summarized_xl.xlsx'
     # Convert the data to a pandas DataFrame

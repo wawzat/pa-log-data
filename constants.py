@@ -1,5 +1,5 @@
 # user directory = ' '
-MATRIX5 = 'd:/Users/wawzat/OneDrive/Documents/House/PurpleAir'
+STORAGE_ROOT_PATH = 'd:/Users/wawzat/OneDrive/Documents/House/PurpleAir'
 
 # download directory
 DOWNLOAD_DIRECTORY = 'd:/Users/wawzat/Downloads'
