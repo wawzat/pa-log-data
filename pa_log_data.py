@@ -20,6 +20,7 @@ from typing import List
 from conversions import AQI, EPA
 import constants
 from configparser import ConfigParser
+from urllib3.exceptions import ReadTimeoutError
 
 # Read config file
 config = ConfigParser()
@@ -271,7 +272,7 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
 @retry(max_attempts=4, delay=90, escalation=90, exception=(
                         gspread.exceptions.APIError,
                         requests.exceptions.ReadTimeout,
-                        urllib3.exceptions.ReadTimeoutError,
+                        ReadTimeoutError,
                         google.auth.exceptions.TransportError))
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     """
