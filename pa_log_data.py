@@ -21,6 +21,7 @@ from conversions import AQI, EPA
 import constants
 from configparser import ConfigParser
 from urllib3.exceptions import ReadTimeoutError
+from google.auth.exceptions import TransportError
 
 # Read config file
 config = ConfigParser()
@@ -273,7 +274,7 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
                         gspread.exceptions.APIError,
                         requests.exceptions.ReadTimeout,
                         ReadTimeoutError,
-                        google.auth.exceptions.TransportError))
+                        TransportError))
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
     """
     Writes the input DataFrame to a Google Sheets worksheet.
