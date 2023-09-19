@@ -12,6 +12,7 @@ SCAQMD_STATION = 'Lake Elsinore Area'
 
 LOCAL_REGION = 'TV'
 #           SW lon / lat            NE lon / lat
+#           nwlng, selat, selng, nwlat
 BBOX_DICT = {
     'TV': (('-117.5298', '33.7180', '-117.4166', '33.8188'), 'TV', 'Temescal Valley') ,
     'RS': (('-117.455864', '33.855306', '-117.185326', '34.018518'), 'RS', 'Riverside'),
@@ -21,9 +22,9 @@ BBOX_DICT = {
 
 # Durations in seconds
 STATUS_INTERVAL_DURATION: int = 1
-LOCAL_INTERVAL_DURATION: int = 3600
-REGIONAL_INTERVAL_DURATION: int = 12500
-PROCESS_INTERVAL_DURATION: int = 10000
+LOCAL_INTERVAL_DURATION: int = 14400
+REGIONAL_INTERVAL_DURATION: int = 1296000
+PROCESS_INTERVAL_DURATION: int = 15000
 
 PROCESS_RESAMPLE_RULE: str = '2H'
 
