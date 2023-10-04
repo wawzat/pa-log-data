@@ -373,8 +373,10 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
         except gspread.exceptions.WorksheetNotFound as e:
             pass
     if output == 'c' or output == 'a':
+        folder_name = f'{yr}-{str(mnth).zfill(2)}'
         if sys.platform == 'win32':
-            output_pathname = Path(constants.STORAGE_ROOT_PATH) / f'{BASE_OUTPUT_FILE_NAME}.csv'
+            os.makedirs(Path(constants.STORAGE_ROOT_PATH) / folder_name, exist_ok=True)
+            output_pathname = Path(constants.STORAGE_ROOT_PATH) / folder_name / f'{BASE_OUTPUT_FILE_NAME}.csv'
         elif sys.platform == 'linux':
             output_pathname = Path.cwd() / f'{BASE_OUTPUT_FILE_NAME}.csv'
         try:
