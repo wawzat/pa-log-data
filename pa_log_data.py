@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20230822
+# James S. Lucas - 20231003
 
 import sys
 import requests
@@ -199,7 +199,7 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     return df
 
 
-@retry(max_attempts=4, delay=90, escalation=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
+@retry(max_attempts=6, delay=90, escalation=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
 def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
     """
     Retrieves data from a Google Sheet specified by the DOCUMENT_NAME and in_worksheet_name parameters.
@@ -270,9 +270,10 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@retry(max_attempts=4, delay=90, escalation=90, exception=(
+@retry(max_attempts=6, delay=90, escalation=90, exception=(
                         gspread.exceptions.APIError,
                         requests.exceptions.ReadTimeout,
+                        requests.exceptions.ConnectionError,
                         ReadTimeoutError,
                         TransportError))
 def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
