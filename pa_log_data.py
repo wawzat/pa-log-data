@@ -296,7 +296,8 @@ def write_data(df, client, DOCUMENT_NAME, worksheet_name, write_mode):
         sheet.append_rows(df.values.tolist(), value_input_option='USER_ENTERED')
     elif write_mode == 'update':
         sheet.clear()
-        sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
+        #sheet.update([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
+        sheet.append_rows([df.columns.values.tolist()] + df.values.tolist(), value_input_option='USER_ENTERED')
 
 
 def current_process(df):
