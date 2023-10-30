@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20231003
+# James S. Lucas - 20231030
 
 import sys
 import requests
@@ -38,9 +38,17 @@ file_handler.setFormatter(formatter)
 # add file handler to logger
 logger.addHandler(file_handler)
 
+# Create a logger for urllib3
+urllib3_logger = logging.getLogger('urllib3')
+urllib3_logger.setLevel(logging.WARNING)
+file_handler = logging.FileHandler('pa_log_data_urllib3_log.txt')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+urllib3_logger.addHandler(file_handler)
+
 # Setup requests session with retry
 session = requests.Session()
-retry = Retry(total=10, backoff_factor=1.0)
+retry = Retry(total=12, backoff_factor=1.0, status_forcelist=tuple(range(401, 600)))
 adapter = HTTPAdapter(max_retries=retry)
 PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
 if PURPLEAIR_READ_KEY == '':
@@ -199,7 +207,7 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
     return df
 
 
-@retry(max_attempts=6, delay=90, escalation=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
+@retry(max_attempts=9, delay=90, escalation=90, exception=(gspread.exceptions.APIError, requests.exceptions.ConnectionError))
 def get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name) -> pd.DataFrame:
     """
     Retrieves data from a Google Sheet specified by the DOCUMENT_NAME and in_worksheet_name parameters.
@@ -270,7 +278,7 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@retry(max_attempts=6, delay=90, escalation=90, exception=(
+@retry(max_attempts=9, delay=90, escalation=90, exception=(
                         gspread.exceptions.APIError,
                         requests.exceptions.ReadTimeout,
                         requests.exceptions.ConnectionError,
