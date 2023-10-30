@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 from time import sleep
 from tabulate import tabulate
 import logging
-from typing import List
 from conversions import AQI, EPA
 import constants
 from configparser import ConfigParser
@@ -60,7 +59,7 @@ session.mount('http://', adapter)
 session.mount('https://', adapter)
 
 # set the credentials for the Google Sheets service account
-scope: List[str] = ['https://spreadsheets.google.com/feeds',
+scope: list[str] = ['https://spreadsheets.google.com/feeds',
                     'https://www.googleapis.com/auth/drive'
                     ]
 GSPREAD_SERVICE_ACCOUNT_JSON_PATH = config.get('google', 'GSPREAD_SERVICE_ACCOUNT_JSON_PATH')
@@ -156,13 +155,13 @@ def elapsed_time(local_start, regional_start, process_start, status_start):
     return local_et, regional_et, process_et, status_et
 
 
-def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
+def get_pa_data(previous_time, bbox: list[float]) -> pd.DataFrame:
     """
     A function that queries the PurpleAir API for sensor data within a given bounding box and time frame.
 
     Args:
         previous_time (datetime): A datetime object representing the time of the last query.
-        bbox (List[float]): A list of four floats representing the bounding box of the area of interest.
+        bbox (list[float]): A list of four floats representing the bounding box of the area of interest.
             The order is [northwest longitude, southeast latitude, southeast longitude, northwest latitude].
 
     Returns:
@@ -184,7 +183,7 @@ def get_pa_data(previous_time, bbox: List[float]) -> pd.DataFrame:
         'et': et_since
     }
     url: str = root_url.format(**params)
-    cols: List[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
+    cols: list[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
     try:
         response = session.get(url)
     except requests.exceptions.RequestException as e:
