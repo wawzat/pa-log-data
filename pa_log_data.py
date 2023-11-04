@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20231030
+# James S. Lucas - 20231104
 
 import sys
 import requests
@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from time import sleep
 from tabulate import tabulate
 import logging
-from conversions import AQI, EPA
+from conversions import AQI
 import constants
 from configparser import ConfigParser
 from urllib3.exceptions import ReadTimeoutError
@@ -155,7 +155,7 @@ def elapsed_time(local_start, regional_start, process_start, status_start):
     return local_et, regional_et, process_et, status_et
 
 
-def get_pa_data(previous_time, bbox: list[float]) -> pd.DataFrame:
+def get_pa_data(previous_time, bbox: list[float], local) -> pd.DataFrame:
     """
     A function that queries the PurpleAir API for sensor data within a given bounding box and time frame.
 
@@ -171,11 +171,12 @@ def get_pa_data(previous_time, bbox: list[float]) -> pd.DataFrame:
     """
     et_since = int((datetime.now() - previous_time + timedelta(seconds=20)).total_seconds())
     root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
+    if local:
+        fields = ['name', 'rssi', 'uptime', 'pm2.5_atm_a', 'pm2.5_atm_b']
+    else:
+        fields = ['pm2.5_atm_a', 'pm2.5_atm_b']
     params = {
-        'fields': "name,latitude,longitude,altitude,rssi,uptime,humidity,temperature,pressure,voc,"
-                "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
-                "pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,"
-                "0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count",
+        'fields': fields,
         'nwlng': bbox[0],
         'selat': bbox[1],
         'selng': bbox[2],
@@ -196,9 +197,6 @@ def get_pa_data(previous_time, bbox: list[float]) -> pd.DataFrame:
         df = pd.DataFrame(json_data['data'], columns=json_data['fields'])
         df = df.fillna('')
         df['time_stamp'] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
-        # convert the lat and lon values to strings
-        df['latitude'] = df['latitude'].astype(str)
-        df['longitude'] = df['longitude'].astype(str)
         df = df[cols]
     else:
         df = pd.DataFrame()
@@ -244,14 +242,6 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(
         df[abs(df['pm2.5_atm_a'] - df['pm2.5_atm_b']) /
             ((df['pm2.5_atm_a'] + df['pm2.5_atm_b'] + 1e-6) / 2) >= 0.7
-        ].index
-    )
-    df = df.drop(df[df['pm2.5_cf_1_a'] > 2000].index)
-    df = df.drop(df[df['pm2.5_cf_1_b'] > 2000].index)
-    df = df.drop(df[abs(df['pm2.5_cf_1_a'] - df['pm2.5_cf_1_b']) >= 5].index)
-    df = df.drop(
-        df[abs(df['pm2.5_cf_1_a'] - df['pm2.5_cf_1_b']) /
-            ((df['pm2.5_cf_1_a'] + df['pm2.5_cf_1_b'] + 1e-6) / 2) >= 0.7
         ].index
     )
     return df
@@ -323,7 +313,6 @@ def current_process(df):
         - This function modifies the input DataFrame in place.
         - The following columns are added to the DataFrame:
             - Ipm25 (AQI)
-            - pm25_epa
             - time_stamp_pacific
         - Data is cleaned according to EPA criteria.
     """
@@ -331,10 +320,6 @@ def current_process(df):
         lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
         axis=1
         )
-    df['pm25_epa'] = df.apply(
-                lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
-                axis=1
-                )
     df['time_stamp'] = pd.to_datetime(
         df['time_stamp'],
         format='%m/%d/%Y %H:%M:%S'
@@ -357,13 +342,7 @@ def process_data(DOCUMENT_NAME, client):
         client: The Google Sheets client object.
 
     Returns:
-        A cleaned and summarized pandas DataFrame with the following columns:
-        'time_stamp', 'sensor_index', 'name', 'latitude', 'longitude', 'altitude', 'rssi',
-        'uptime', 'humidity', 'temperature', 'pressure', 'voc', 'pm1.0_atm_a',
-        'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
-        'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a', 'pm2.5_cf_1_b', 'pm10.0_cf_1_a',
-        'pm10.0_cf_1_b', '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count',
-        '5.0_um_count', '10.0_um_count', 'pm25_epa', 'Ipm25'.
+        df (pandas.DataFrame): The processed DataFrame.
     """
     write_mode: str = 'update'
     for k, v in constants.BBOX_DICT.items():
@@ -372,16 +351,12 @@ def process_data(DOCUMENT_NAME, client):
         out_worksheet_name: str = k + ' Proc'
         df = get_gsheet_data(client, DOCUMENT_NAME, in_worksheet_name)
         if constants.LOCAL_REGION == k:
-            # Save the dataframe for later use by the regional_stats() and sensor_health() functions
+            # Save the dataframe for later use by the sensor_health() function
             df_local = df.copy()
         df['Ipm25'] = df.apply(
             lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
             axis=1
             )
-        df['pm25_epa'] = df.apply(
-                    lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
-                    axis=1
-                    )
         df['time_stamp'] = pd.to_datetime(
             df['time_stamp'],
             format='%m/%d/%Y %H:%M:%S'
@@ -478,7 +453,8 @@ def regional_stats(client, DOCUMENT_NAME):
 def main():
     five_min_ago: datetime = datetime.now() - timedelta(minutes=5)
     for k, v in constants.BBOX_DICT.items():
-        df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(k)[0])
+        local = True
+        df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(k)[0], local)
         if len(df.index) > 0:
             write_mode = 'append'
             write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode)
@@ -492,7 +468,8 @@ def main():
             if status_et >= constants.STATUS_INTERVAL_DURATION:
                 status_start = status_update(local_et, regional_et, process_et)
             if local_et >= constants.LOCAL_INTERVAL_DURATION:
-                df_local = get_pa_data(local_start, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0])
+                local = True
+                df_local = get_pa_data(local_start, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0], local)
                 if len (df_local.index) > 0:
                     write_mode: str = 'append'
                     write_data(df_local, client, constants.DOCUMENT_NAME, constants.LOCAL_WORKSHEET_NAME, write_mode)
@@ -502,8 +479,9 @@ def main():
                     write_data(df_current, client, constants.DOCUMENT_NAME, constants.CURRENT_WORKSHEET_NAME, write_mode)
                 local_start: datetime = datetime.now()
             if regional_et > constants.REGIONAL_INTERVAL_DURATION:
+                local = False
                 for regional_key in constants.REGIONAL_KEYS:
-                    df = get_pa_data(regional_start, constants.BBOX_DICT.get(regional_key)[0]) 
+                    df = get_pa_data(regional_start, constants.BBOX_DICT.get(regional_key)[0], local) 
                     if len(df.index) > 0:
                         write_mode: str = 'append'
                         write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(regional_key)[1], write_mode)
