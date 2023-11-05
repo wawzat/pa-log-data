@@ -39,18 +39,13 @@ OUT_WORKSHEET_HEALTH_NAME: str = 'Health'
 
 
 cols_1 = ['time_stamp', 'time_stamp_pacific']
-cols_2 = ['sensor_index', 'name', 'latitude', 'longitude']
-cols_3 = ['altitude']
-cols_4 = ['rssi']
-cols_5 = ['uptime']
-cols_6 = ['humidity', 'temperature', 'pressure', 'voc']
-cols_7 = ['pm1.0_atm_a', 'pm1.0_atm_b', 'pm2.5_atm_a', 'pm2.5_atm_b', 'pm10.0_atm_a', 'pm10.0_atm_b',
-          'pm1.0_cf_1_a', 'pm1.0_cf_1_b', 'pm2.5_cf_1_a', 'pm2.5_cf_1_b', 'pm10.0_cf_1_a', 'pm10.0_cf_1_b',
-          '0.3_um_count', '0.5_um_count', '1.0_um_count', '2.5_um_count', '5.0_um_count', '10.0_um_count']
-cols_8 = ['pm25_epa']
-cols_9 = ['Ipm25']
+cols_2 = ['sensor_index', 'name']
+cols_3 = ['rssi']
+cols_4 = ['uptime']
+cols_5 = ['pm2.5_atm_a', 'pm2.5_atm_b']
+cols_6 = ['Ipm25']
 
-cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7 + cols_8 + cols_9
+cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6
 
 tv_sensors_all = {
     'AQMD_NASA_249': {'ID': 28551, 'Neighborhood': 'Lemon Grove'},
