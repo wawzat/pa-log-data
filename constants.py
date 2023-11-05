@@ -39,13 +39,15 @@ OUT_WORKSHEET_HEALTH_NAME: str = 'Health'
 
 
 cols_1 = ['time_stamp', 'time_stamp_pacific']
-cols_2 = ['sensor_index', 'name']
-cols_3 = ['rssi']
-cols_4 = ['uptime']
-cols_5 = ['pm2.5_atm_a', 'pm2.5_atm_b']
-cols_6 = ['Ipm25']
+cols_2 = ['sensor_index']
+cols_3 = ['name']
+cols_4 = ['rssi']
+cols_5 = ['uptime']
+cols_6 = ['pm2.5_atm_a', 'pm2.5_atm_b']
+cols_7 = ['Ipm25']
 
-cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6
+local_cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6
+regional_cols = cols_1 + cols_2 + cols_5 + cols_6
 
 tv_sensors_all = {
     'AQMD_NASA_249': {'ID': 28551, 'Neighborhood': 'Lemon Grove'},
