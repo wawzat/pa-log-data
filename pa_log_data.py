@@ -172,9 +172,9 @@ def get_pa_data(previous_time, bbox: list[float], local) -> pd.DataFrame:
     et_since = int((datetime.now() - previous_time + timedelta(seconds=20)).total_seconds())
     root_url: str = 'https://api.purpleair.com/v1/sensors/?fields={fields}&max_age={et}&location_type=0&nwlng={nwlng}&nwlat={nwlat}&selng={selng}&selat={selat}'
     if local:
-        fields = "'name', 'rssi', 'uptime', 'pm2.5_atm_a', 'pm2.5_atm_b'"
+        fields = 'name,rssi,uptime,pm2.5_atm_a,pm2.5_atm_b'
     else:
-        fields = "'pm2.5_atm_a', 'pm2.5_atm_b'"
+        fields = 'pm2.5_atm_a,pm2.5_atm_b'
     params = {
         'fields': fields,
         'nwlng': bbox[0],
@@ -184,8 +184,6 @@ def get_pa_data(previous_time, bbox: list[float], local) -> pd.DataFrame:
         'et': et_since
     }
     url: str = root_url.format(**params)
-    print(url)
-    sleep(10)
     cols: list[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
     try:
         response = session.get(url)
