@@ -455,7 +455,10 @@ def regional_stats(client, DOCUMENT_NAME):
 def main():
     five_min_ago: datetime = datetime.now() - timedelta(minutes=5)
     for k, v in constants.BBOX_DICT.items():
-        local = True
+        if k == constants.LOCAL_REGION:
+            local = True
+        else:
+            local = False
         df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(k)[0], local)
         if len(df.index) > 0:
             write_mode = 'append'
