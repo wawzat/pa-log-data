@@ -184,6 +184,8 @@ def get_pa_data(previous_time, bbox: list[float], local) -> pd.DataFrame:
         'et': et_since
     }
     url: str = root_url.format(**params)
+    print(url)
+    sleep(10)
     cols: list[str] = ['time_stamp', 'sensor_index'] + [col for col in params['fields'].split(',')]
     try:
         response = session.get(url)
