@@ -332,7 +332,8 @@ def current_process(df):
     df['time_stamp'] = df['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df['time_stamp_pacific'] = df['time_stamp_pacific'].dt.strftime('%m/%d/%Y %H:%M:%S')
     df = clean_data(df)
-    df = format_data(df)
+    local = True
+    df = format_data(df, local)
     return df
 
 
@@ -357,6 +358,9 @@ def process_data(DOCUMENT_NAME, client):
         if constants.LOCAL_REGION == k:
             # Save the dataframe for later use by the sensor_health() function
             df_local = df.copy()
+            local = True
+        else:
+            local = False
         df['Ipm25'] = df.apply(
             lambda x: AQI.calculate(x['pm2.5_atm_a'], x['pm2.5_atm_b']),
             axis=1
@@ -376,7 +380,7 @@ def process_data(DOCUMENT_NAME, client):
         df_summarized = df_summarized.dropna(subset=['pm2.5_atm_a', 'pm2.5_atm_b'])
         df_summarized.replace('', 0, inplace=True)
         df_summarized = clean_data(df_summarized)
-        df_summarized = format_data(df_summarized)
+        df_summarized = format_data(df_summarized, local)
         write_data(df_summarized, client, DOCUMENT_NAME, out_worksheet_name, write_mode)
         sleep(90)
     return df_local
