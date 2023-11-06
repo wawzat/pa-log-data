@@ -2,7 +2,7 @@
 # Regularly Polls Purpleair api for outdoor sensor data for sensors within defined rectangular geographic regions at a defined interval.
 # Appends data to Google Sheets
 # Processes data
-# James S. Lucas - 20231104
+# James S. Lucas - 20231106
 
 import sys
 import requests
@@ -247,7 +247,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def format_data(df: pd.DataFrame) -> pd.DataFrame:
+def format_data(df: pd.DataFrame, local: bool) -> pd.DataFrame:
     """
     Formats the input DataFrame by rounding the values in certain columns and converting the values in other columns to integers.
 
@@ -257,13 +257,17 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         A new DataFrame with the specified columns rounded or converted to integers.
     """
-    df[constants.cols_4] = df[constants.cols_4].round(2)
-    df[constants.cols_5] = df[constants.cols_5].astype(int)
-    df[constants.cols_6] = df[constants.cols_6].round(2)
-    df[constants.cols_7] = df[constants.cols_7].round(2)
-    df[constants.cols_8] = df[constants.cols_8].round(2)
-    df[constants.cols_9] = df[constants.cols_9].astype(int)
-    df = df[constants.cols]
+    if local:
+        df[constants.cols_4] = df[constants.cols_4].astype(int)
+        df[constants.cols_5] = df[constants.cols_5].astype(int)
+        df[constants.cols_6] = df[constants.cols_6].round(2)
+        df[constants.cols_7] = df[constants.cols_7].astype(int)
+        df = df[constants.local_cols]
+    else:
+        df[constants.cols_5] = df[constants.cols_5].astype(int)
+        df[constants.cols_6] = df[constants.cols_6].round(2)
+        df[constants.cols_7] = df[constants.cols_7].astype(int)
+        df = df[constants.regional_cols]
     return df
 
 
@@ -362,8 +366,6 @@ def process_data(DOCUMENT_NAME, client):
             format='%m/%d/%Y %H:%M:%S'
             )
         df = df.set_index('time_stamp')
-        df[constants.cols_6] = df[constants.cols_6].replace('', 0)
-        df[constants.cols_6] = df[constants.cols_6].astype(float)
         df_summarized = df.groupby('name').resample(constants.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp_pacific'] = df_summarized['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
