@@ -370,7 +370,7 @@ def process_data(DOCUMENT_NAME, client):
             format='%m/%d/%Y %H:%M:%S'
             )
         df = df.set_index('time_stamp')
-        df_summarized = df.groupby('name').resample(constants.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
+        df_summarized = df.groupby('sensor_index').resample(constants.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
         df_summarized = df_summarized.reset_index()
         df_summarized['time_stamp_pacific'] = df_summarized['time_stamp'].dt.tz_localize('UTC').dt.tz_convert('US/Pacific')
         df_summarized['time_stamp'] = df_summarized['time_stamp'].dt.strftime('%m/%d/%Y %H:%M:%S')
