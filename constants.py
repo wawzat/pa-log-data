@@ -48,7 +48,7 @@ cols_6 = ['pm2.5_atm_a', 'pm2.5_atm_b']
 cols_7 = ['Ipm25']
 
 local_cols = cols_1 + cols_2 + cols_3 + cols_4 + cols_5 + cols_6 + cols_7
-regional_cols = cols_1 + cols_2 + cols_5 + cols_6 + cols_7
+regional_cols = cols_1 + cols_2 + cols_3 + cols_6 + cols_7
 
 tv_sensors_all = {
     'AQMD_NASA_249': {'ID': 28551, 'Neighborhood': 'Lemon Grove'},
