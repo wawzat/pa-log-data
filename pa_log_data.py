@@ -370,7 +370,7 @@ def process_data(DOCUMENT_NAME, client):
             format='%m/%d/%Y %H:%M:%S'
             )
         df = df.set_index('time_stamp')
-        print(df_summarized.head())
+        print(df.head())
         sleep(10)
         df.set_index('sensor_index', inplace=True)
         df_summarized = df.resample(constants.PROCESS_RESAMPLE_RULE).mean(numeric_only=True)
