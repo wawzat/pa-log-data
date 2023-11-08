@@ -264,7 +264,6 @@ def format_data(df: pd.DataFrame, local: bool) -> pd.DataFrame:
         df[constants.cols_7] = df[constants.cols_7].astype(int)
         df = df[constants.local_cols]
     else:
-        df[constants.cols_5] = df[constants.cols_5].astype(int)
         df[constants.cols_6] = df[constants.cols_6].round(2)
         df[constants.cols_7] = df[constants.cols_7].astype(int)
         df = df[constants.regional_cols]
