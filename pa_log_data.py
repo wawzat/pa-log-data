@@ -493,7 +493,7 @@ def main():
         df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0], local)
         if len(df.index) > 0:
             write_mode = 'append'
-            write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode)
+            write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(constants.LOCAL_REGION)[1], write_mode)
         else:
             pass
 
