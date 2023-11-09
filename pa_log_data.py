@@ -19,6 +19,7 @@ import logging
 from conversions import AQI
 import constants
 from configparser import ConfigParser
+import argparse
 from urllib3.exceptions import ReadTimeoutError
 from google.auth.exceptions import TransportError
 
@@ -70,6 +71,23 @@ if GSPREAD_SERVICE_ACCOUNT_JSON_PATH == '':
 creds = ServiceAccountCredentials.from_json_keyfile_name(GSPREAD_SERVICE_ACCOUNT_JSON_PATH, scope)
 client = gspread.authorize(creds)
 client.set_timeout(240)
+
+
+def get_arguments():
+    parser = argparse.ArgumentParser(
+    description='Log PurpleAir Data.',
+    prog='pa_log_data.py',
+    usage='%(prog)s [-r <regional>]',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    g=parser.add_argument_group(title='arguments',
+            description='''            -r, --regional   Optional. Get Regional data when program first starts.        ''')
+    g.add_argument('-r', '--regional',
+                    action='store_true',
+                    dest='regional',
+                    help=argparse.SUPPRESS)
+    args = parser.parse_args()
+    return args
 
 
 def retry(max_attempts=3, delay=2, escalation=10, exception=(Exception,)):
@@ -456,18 +474,30 @@ def regional_stats(client, DOCUMENT_NAME):
 
 
 def main():
+    args = get_arguments()
     five_min_ago: datetime = datetime.now() - timedelta(minutes=5)
-    for k, v in constants.BBOX_DICT.items():
-        if k == constants.LOCAL_REGION:
-            local = True
-        else:
-            local = False
-        df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(k)[0], local)
+    if args.regional:
+        for k, v in constants.BBOX_DICT.items():
+            if k == constants.LOCAL_REGION:
+                local = True
+            else:
+                local = False
+            df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(k)[0], local)
+            if len(df.index) > 0:
+                write_mode = 'append'
+                write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode)
+            else:
+                pass
+    else:
+        local = True
+        df = get_pa_data(five_min_ago, constants.BBOX_DICT.get(constants.LOCAL_REGION)[0], local)
         if len(df.index) > 0:
             write_mode = 'append'
             write_data(df, client, constants.DOCUMENT_NAME, constants.BBOX_DICT.get(k)[1], write_mode)
         else:
             pass
+
+
     local_start, regional_start, process_start, status_start = datetime.now(), datetime.now(), datetime.now(), datetime.now()
     while True:
         try:
