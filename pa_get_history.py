@@ -20,7 +20,7 @@ The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20230711
+# James S. Lucas - 20240713
 
 import sys
 import os
@@ -119,7 +119,7 @@ def get_arguments():
             description='''            -m, --month   Optional. The month to get data for. If not provided, current month will be used.
             -y, --year    Optional. The year to get data for. If not provided, current year will be used.
             -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.
-            -o, --output  Optional. Output format. If not provided, output will be written to a CSV file. Choices = c, s, x, a 
+            -o, --output  Optional. Output format. Default is CSV file. CSV, Google Sheets, XL, All. Choices = c, s, x, a 
             -a, --average Optional. Number of minutes to average. If not provided, 30 minutes will be used. Choices = 0, 10, 30, 60, 360, 1440     ''')
     g.add_argument('-o', '--output',
                     type=str,
