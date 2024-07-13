@@ -5,3 +5,4 @@ xlsxwriter
 requests
 tabulate
 selenium
+openpyxl
