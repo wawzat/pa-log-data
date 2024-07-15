@@ -20,7 +20,7 @@ The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20240714
+# James S. Lucas - 20240715
 
 import sys
 import os
@@ -120,7 +120,8 @@ def get_arguments():
             -y, --year    Optional. The year to get data for. If not provided, current year will be used.
             -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.
             -o, --output  Optional. Output format. Default is CSV file. CSV, Google Sheets, XL, All. Choices = c, s, x, a 
-            -a, --average Optional. Number of minutes to average. If not provided, 30 minutes will be used. Choices = 0, 10, 30, 60, 360, 1440     ''')
+            -a, --average Optional. Number of minutes to average. If not provided, 30 minutes will be used. Choices = 0, 10, 30, 60, 360, 1440
+            -f, --fields  Optional. Fields to retrieve. Default is all fields. Choices are; (a)ll, (c)ustom, (m)inimal          ''')
     g.add_argument('-o', '--output',
                     type=str,
                     default='c',
@@ -149,6 +150,13 @@ def get_arguments():
                     choices = [0, 10, 30, 60, 360, 1440],
                     metavar='',
                     dest='average',
+                    help=argparse.SUPPRESS)
+    g.add_argument('-f', '--fields',
+                    type=str,
+                    default='a',
+                    choices = ['a', 'c', 'm'],
+                    metavar='',
+                    dest='fields',
                     help=argparse.SUPPRESS)
 
     args = parser.parse_args()
@@ -197,7 +205,7 @@ def format_spreadsheet(writer, sheet):
     worksheet.freeze_panes(1, 0)
 
 
-def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
+def get_data(sensor_name, sensor_id, yr, mnth, average, fields_to_get) -> pd.DataFrame:
     """
     A function that queries the PurpleAir API for sensor data for a given sensor_id.
 
@@ -240,11 +248,14 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
         # Adjust end_timestamp based on the latest end_timestamp
         if latest_end_timestamp > start_timestamp:
             start_timestamp = latest_end_timestamp + 1
+        if fields_to_get == 'a':
+            fields = constants.ALL_FIELD_LIST
+        elif fields_to_get == 'c':
+            fields = constants.CUSTOM_FIELD_LIST
+        elif fields_to_get == 'm':
+            fields = constants.MINIMAL_FIELD_LIST
         params = {
-            'fields': "rssi,uptime,humidity,temperature,pressure,voc,"
-                        "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,"
-                        "pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,"
-                        "0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count",
+            'fields': fields,
             'average': average,
             'ID': sensor_id,
             'start_timestamp': start_timestamp,
@@ -278,7 +289,7 @@ def get_data(sensor_name, sensor_id, yr, mnth, average) -> pd.DataFrame:
                     axis=1
                     )
                 df_temp['pm25_epa'] = df_temp.apply(
-                            lambda x: EPA.calculate(x['humidity'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
+                            lambda x: EPA.calculate(x['humidity_a'], x['pm2.5_cf_1_a'], x['pm2.5_cf_1_b']),
                             axis=1
                             )
                 df_list.append(df_temp)  # Append dataframe to the list
@@ -412,7 +423,7 @@ def main():
     start_time = datetime.now()
     if args.sensor_name is not None:
         try:
-            df = get_data(args.sensor_name, constants.sensors_current[args.sensor_name]['ID'], args.yr, args.mnth, args.average)
+            df = get_data(args.sensor_name, constants.sensors_current[args.sensor_name]['ID'], args.yr, args.mnth, args.average, args.fields)
         except KeyError as e:
             message = f'Invalid sensor name: {args.sensor_name}, exiting...'
             print(message)
@@ -428,7 +439,7 @@ def main():
             loop_num += 1
             message = f'Getting data for sensor {k} for {calendar.month_name[args.mnth]} {args.yr}, {loop_num} of {len(constants.sensors_current)}' 
             print(message)
-            df = get_data(k, v['ID'], args.yr, args.mnth, args.average)
+            df = get_data(k, v['ID'], args.yr, args.mnth, args.average, args.fields)
             #print(df)
             print()
             if len(df.index) > 0:

@@ -129,3 +129,8 @@ sensors_current = {
 
 XL_EXCLUDE_LIST = ('combined_summarized_xl.xlsx', 'combined_sheets_xl.xlsx')
 CSV_EXCLUDE_LIST = ('LE_REF_CO.csv', 'LE_REF_NO2.csv', 'LE_REF_O3.csv', 'LE_REF_PM2.5.csv', 'LE_REF_T.csv', 'LE_REF_WD.csv', 'LE_REF_WS.csv')
+
+#Used for pa_get_history
+ALL_FIELD_LIST = "rssi,uptime,humidity_a,temperature_a,pressure_a,voc_a,pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count"
+CUSTOM_FIELD_LIST = "rssi,uptime,humidity_a,temperature_a,pressure_a,voc_a,pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,pm1.0_cf_1_a,pm1.0_cf_1_b,pm2.5_cf_1_a,pm2.5_cf_1_b,pm10.0_cf_1_a,pm10.0_cf_1_b,0.3_um_count,0.5_um_count,1.0_um_count,2.5_um_count,5.0_um_count,10.0_um_count"
+MINIMAL_FIELD_LIST = "rssi,uptime,humidity_a,pressure_a,pm2.5_atm_a,pm2.5_atm_b,pm2.5_cf_1_a,pm2.5_cf_1_b"
