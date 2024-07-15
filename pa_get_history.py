@@ -108,6 +108,18 @@ class IntRange:
             return argparse.ArgumentTypeError("Must be an integer")
 
 
+# Argprse action to add a prefix character to an argument
+class PrefixCharAction(argparse.Action):
+    def __init__(self, option_strings, dest, prefix_char=None, **kwargs):
+        self.prefix_char = prefix_char
+        super(PrefixCharAction, self).__init__(option_strings, dest, **kwargs)
+    
+    def __call__(self, parser, namespace, values, option_string=None):
+        if self.prefix_char is not None:
+            values = f"{self.prefix_char}{values}"
+        setattr(namespace, self.dest, values)
+
+
 def get_arguments():
     parser = argparse.ArgumentParser(
     description='Get PurpleAir Sensor Historical Data.',
@@ -116,12 +128,13 @@ def get_arguments():
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''            -m, --month   Optional. The month to get data for. If not provided, current month will be used.
-            -y, --year    Optional. The year to get data for. If not provided, current year will be used.
-            -s, --sensor  Optional. Sensor Name. If not provided, constants.py sensors_current will be used.
-            -o, --output  Optional. Output format. Default is CSV file. CSV, Google Sheets, XL, All. Choices = c, s, x, a 
-            -a, --average Optional. Number of minutes to average. If not provided, 30 minutes will be used. Choices = 0, 10, 30, 60, 360, 1440
-            -f, --fields  Optional. Fields to retrieve. Default is all fields. Choices are; (a)ll, (c)ustom, (m)inimal          ''')
+            description='''            -m, --month      Optional. The month to get data for. If not provided, current month will be used.
+            -y, --year       Optional. The year to get data for. If not provided, current year will be used.
+            -d, --directory  Optional. A directory suffix to append to the default directory name. Default YYYY-MM.
+            -s, --sensor     Optional. Sensor Name. If not provided, constants.py sensors_current will be used.
+            -o, --output     Optional. Output format. Default is CSV file. CSV, Google Sheets, XL, All. Choices = c, s, x, a 
+            -a, --average    Optional. Number of minutes to average. If not provided, 30 minutes will be used. Choices = 0, 10, 30, 60, 360, 1440
+            -f, --fields     Optional. Fields to retrieve. Default is all fields. Choices are; (a)ll, (c)ustom, (m)inimal          ''')
     g.add_argument('-o', '--output',
                     type=str,
                     default='c',
@@ -138,6 +151,13 @@ def get_arguments():
                     type=IntRange(2015, datetime.now().year),
                     default=datetime.now().year,
                     dest='yr',
+                    help=argparse.SUPPRESS)
+    g.add_argument('-d', '--directory',
+                    type=str,
+                    default=None,
+                    dest='directory',
+                    action=PrefixCharAction,
+                    prefix_char='_',
                     help=argparse.SUPPRESS)
     g.add_argument('-s', '--sensor',
                     type=str,
@@ -207,15 +227,19 @@ def format_spreadsheet(writer, sheet):
 
 def get_data(sensor_name, sensor_id, yr, mnth, average, fields_to_get) -> pd.DataFrame:
     """
-    A function that queries the PurpleAir API for sensor data for a given sensor_id.
+    Retrieves historical data from the PurpleAir API for a specific sensor.
 
     Args:
-        sensor_id.
+        sensor_name (str): The name of the sensor.
+        sensor_id (int): The ID of the sensor.
+        yr (int): The year of the data to retrieve.
+        mnth (int): The month of the data to retrieve.
+        average (int): The time interval (in minutes) over which to average the data.
+        fields_to_get (str): The type of fields to retrieve ('a' for all fields, 'c' for custom fields, 'm' for minimal fields).
 
     Returns:
-        A pandas DataFrame containing sensor data for the specified sensor_id and time frame. The DataFrame will contain columns
-        for the timestamp of the data, the index of the sensor, and various sensor measurements such as temperature,
-        humidity, and PM2.5 readings.
+        pd.DataFrame: A DataFrame containing the retrieved data.
+
     """
     last_day_of_month = calendar.monthrange(yr, mnth)[1]
     if datetime.now().month == mnth and datetime.now().year == yr and datetime.now().day < last_day_of_month:
@@ -308,25 +332,21 @@ def get_data(sensor_name, sensor_id, yr, mnth, average, fields_to_get) -> pd.Dat
     return df
 
 
-def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NAME, yr, mnth):
+def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NAME, yr, mnth, directory_suffix=None):
     """
-    Writes the given Pandas DataFrame to a Google Sheets worksheet with the specified name in the specified document.
+    Writes data to Google Sheets, CSV, and/or Excel file.
 
     Args:
-        df (pd.DataFrame): The DataFrame containing the data to be written.
-        client (gspread.client.Client): A client object for accessing the Google Sheets API.
-        DOCUMENT_NAME (str): The name of the Google Sheets document to write to.
-        worksheet_name (str): The name of the worksheet to write the data to.
-        write_mode (str): The mode for writing the data to the worksheet. Either "append" or "update".
-        WRITE_CSV (bool, optional): Whether to also write the DataFrame to a CSV file. Defaults to False.
-
-    Raises:
-        Exception: If an error occurs during the writing process.
-
-    Returns:
-        None
+        df (pandas.DataFrame): The DataFrame containing the data to be written.
+        client: The Google Sheets client object.
+        DOCUMENT_NAME (str): The name of the Google Spreadsheet.
+        sensor_id (str): The ID of the sensor.
+        output (str): The output format. Possible values are 's' (Google Sheets), 'c' (CSV), 'x' (Excel), or 'a' (all).
+        BASE_OUTPUT_FILE_NAME (str): The base name of the output file.
+        yr (int): The year.
+        mnth (int): The month.
+        directory_suffix (str, optional): The suffix to be added to the directory name. Defaults to None.
     """
-
     if output == 's' or output == 'a':
         MAX_ATTEMPTS: int = 4
         attempts: int = 0
@@ -337,7 +357,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                 # open the Google Sheets output worksheet and write the data
                 spreadsheet = client.open(DOCUMENT_NAME)
             except gspread.exceptions.SpreadsheetNotFound as e:
-                message = f'Creatimg Google Spreadsheet "{DOCUMENT_NAME}"'
+                message = f'Creating Google Spreadsheet "{DOCUMENT_NAME}"'
                 print(message)
                 client.create(DOCUMENT_NAME)
                 spreadsheet = client.open(DOCUMENT_NAME)
@@ -349,7 +369,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                 spreadsheet.share(google_account, perm_type='user', role='writer')
             except gspread.exceptions.APIError as e:
                 attempts += 1
-                logger.exception('gspread error in write_data() attempt #{attempts} of {MAX_ATTEMPTS}')
+                logger.exception(f'gspread error in write_data() attempt #{attempts} of {MAX_ATTEMPTS}')
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
                     SLEEP_DURATION += 90
@@ -372,7 +392,7 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
                 break
             except gspread.exceptions.APIError as e:
                 attempts += 1
-                logger.exception('gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
+                logger.exception(f'gspread error in write_data(): attempt #{attempts} of {MAX_ATTEMPTS}')
                 if attempts < MAX_ATTEMPTS:
                     sleep(SLEEP_DURATION)
                     SLEEP_DURATION += 90
@@ -383,8 +403,8 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
             spreadsheet.del_worksheet(sheet)
         except gspread.exceptions.WorksheetNotFound as e:
             pass
+    folder_name = f'{yr}-{str(mnth).zfill(2)}{directory_suffix}'
     if output == 'c' or output == 'a':
-        folder_name = f'{yr}-{str(mnth).zfill(2)}'
         if sys.platform == 'win32':
             os.makedirs(Path(constants.STORAGE_ROOT_PATH) / folder_name, exist_ok=True)
             output_pathname = Path(constants.STORAGE_ROOT_PATH) / folder_name / f'{BASE_OUTPUT_FILE_NAME}.csv'
@@ -397,7 +417,6 @@ def write_data(df, client, DOCUMENT_NAME, sensor_id, output, BASE_OUTPUT_FILE_NA
         except Exception as e:
             logger.exception('write_data() error writing Excel file')
     if output == 'x' or output == 'a':
-        folder_name = f'{yr}-{str(mnth).zfill(2)}'
         if sys.platform == 'win32':
             os.makedirs(Path(constants.STORAGE_ROOT_PATH) / folder_name, exist_ok=True)
             output_pathname = Path(constants.STORAGE_ROOT_PATH) / folder_name / f'{BASE_OUTPUT_FILE_NAME}.xlsx'
@@ -432,7 +451,7 @@ def main():
         if len(df.index) > 0:
             DOCUMENT_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{str(args.mnth).zfill(2)}'
             BASE_OUTPUT_FILE_NAME = f'pa_history_single_{args.sensor_name}_{args.yr}_{str(args.mnth).zfill(2)}'
-            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, BASE_OUTPUT_FILE_NAME, args.yr, args.mnth)
+            write_data(df, client, DOCUMENT_NAME, args.sensor_name, args.output, BASE_OUTPUT_FILE_NAME, args.yr, args.mnth, args.directory)
     else:
         loop_num = 0
         for k, v in constants.sensors_current.items():
@@ -445,7 +464,7 @@ def main():
             if len(df.index) > 0:
                 DOCUMENT_NAME = f'pa_history_{args.yr}_{str(args.mnth).zfill(2)}'
                 BASE_OUTPUT_FILE_NAME = f'pa_history_{k}_{args.yr}_{str(args.mnth).zfill(2)}'
-                write_data(df, client, DOCUMENT_NAME, k, args.output, BASE_OUTPUT_FILE_NAME, args.yr, args.mnth)
+                write_data(df, client, DOCUMENT_NAME, k, args.output, BASE_OUTPUT_FILE_NAME, args.yr, args.mnth, args.directory)
             sleep(60)
             end_time = datetime.now()
             time_per_loop = (end_time - start_time) / loop_num
