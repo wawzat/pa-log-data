@@ -40,6 +40,18 @@ class IntRange:
             return argparse.ArgumentTypeError("Must be an integer")
 
 
+# Argprse action to add a prefix character to an argument
+class PrefixCharAction(argparse.Action):
+    def __init__(self, option_strings, dest, prefix_char=None, **kwargs):
+        self.prefix_char = prefix_char
+        super(PrefixCharAction, self).__init__(option_strings, dest, **kwargs)
+    
+    def __call__(self, parser, namespace, values, option_string=None):
+        if self.prefix_char is not None:
+            values = f"{self.prefix_char}{values}"
+        setattr(namespace, self.dest, values)
+
+
 def get_arguments():
     parser = argparse.ArgumentParser(
     description='Combine and merge multiple spreadsheets into one.',
@@ -48,10 +60,11 @@ def get_arguments():
     formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g=parser.add_argument_group(title='arguments',
-            description='''            -m, --month   Optional. The month to get data for. If not provided, current month will be used.
-            -y, --year    Optional. The year to get data for. If not provided, current year will be used. 
-            -t, --tool    Optional. Data is from PurpleAir download tool. If not provided, data is from PurpleAir API.
-            -f,  --format Optonal. Choose the input format. CSV or XL. Default is XL     ''')
+            description='''            -m, --month     Optional. The month to get data for. If not provided, current month will be used.
+            -y, --year       Optional. The year to get data for. If not provided, current year will be used. 
+            -d  --directory  Optional. A suffix to add to the default directory. an underscore is automatically prefixed. Default is YYYY-MM.
+            -t, --tool       Optional. Data is from PurpleAir download tool. If not provided, data is from PurpleAir API.
+            -f,  --format    Optonal. Choose the input format. CSV or XL. Default is XL     ''')
     g.add_argument('-m', '--month',
                     type=IntRange(1, 12),
                     default=datetime.now().month,
@@ -61,6 +74,13 @@ def get_arguments():
                     type=IntRange(2015, datetime.now().year),
                     default=datetime.now().year,
                     dest='yr',
+                    help=argparse.SUPPRESS)
+    g.add_argument('-d', '--directory',
+                    type=str,
+                    default=None,
+                    dest='directory',
+                    action=PrefixCharAction,
+                    prefix_char='_',
                     help=argparse.SUPPRESS)
     g.add_argument('-t', '--tool',
                     action='store_true',
@@ -251,7 +271,7 @@ def format_spreadsheet(writer, sheet, tool):
 
 def main():
     args = get_arguments()
-    root_path = Path(constants.STORAGE_ROOT_PATH) / f'{args.yr}-{str(args.mnth).zfill(2)}'
+    root_path = Path(constants.STORAGE_ROOT_PATH) / f'{args.yr}-{str(args.mnth).zfill(2)}{args.directory}'
     if os.path.exists(root_path):
         if args.format == 'c':
             copy_csv_to_xl(root_path)
