@@ -13,14 +13,14 @@ The program can be run from the command line with the following arguments:
     -m, --month: Integer of the month to get data for.
     -y, --year: The year to get data for.
     -s, --sensor: Optional. The name of a sensor to get data for.
-    -o, --output: Optional. The output format. If not provided, output will be written to a CSV file.
+    -o, --output: Optional. The output format. CSV, Google Sheets, XL, All. Defaults to CSV.
     -a, --average: Optional. The number of minutes to average. If not provided, 30 minutes will be used.
 
 The program contains the following functions:
     - get_arguments(): Parses command line arguments and returns them as a Namespace object.
     - get_data(sensor_id, yr, mnth): Queries the PurpleAir API for sensor data for a given sensor ID and time frame, and returns the data as a pandas DataFrame.
 """
-# James S. Lucas - 20240713
+# James S. Lucas - 20240714
 
 import sys
 import os
