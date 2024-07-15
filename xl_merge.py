@@ -73,8 +73,13 @@ def get_arguments():
     args = parser.parse_args()
     return(args)
 
+
 def copy_csv_to_xl(root_path):
     file_list = list(root_path.glob('*.csv'))
+    csv_exclude_list = constants.CSV_EXCLUDE_LIST
+    for filename in csv_exclude_list:
+        if os.path.exists(root_path / filename):
+            file_list.remove(root_path / filename)
     for filename in file_list:
         df = pd.read_csv(filename)
         df.to_excel(root_path / f'{filename.stem}.xlsx', index=False)
@@ -92,8 +97,8 @@ def get_file_list(root_path, format):
     - file_list: A list of file paths to Excel files in the specified directory, excluding any files in the exclude_list.
     """
     file_list = list(root_path.glob('*.xlsx'))
-    exclude_list = ('combined_summarized_xl.xlsx', 'combined_sheets_xl.xlsx')
-    for filename in exclude_list:
+    xl_exclude_list = constants.XL_EXCLUDE_LIST
+    for filename in xl_exclude_list:
         if os.path.exists(root_path / filename):
             file_list.remove(root_path / filename)
     return file_list
