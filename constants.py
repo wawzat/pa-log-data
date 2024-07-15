@@ -126,3 +126,6 @@ sensors_current = {
     'Temescal Valley 2': {'ID': 26127, 'Neighborhood': 'HCR'},
     'Temescal': {'ID': 9172, 'Neighborhood': 'Terramor'},
 }
+
+XL_EXCLUDE_LIST = ('combined_summarized_xl.xlsx', 'combined_sheets_xl.xlsx')
+CSV_EXCLUDE_LIST = ('LE_REF_CO.csv', 'LE_REF_NO2.csv', 'LE_REF_O3.csv', 'LE_REF_PM2.5.csv', 'LE_REF_T.csv', 'LE_REF_WD.csv', 'LE_REF_WS.csv')
