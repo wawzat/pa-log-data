@@ -40,7 +40,7 @@
 - Read the gspread documentation for authentication instructions. https://docs.gspread.org/en/v5.7.2/oauth2.html 
 - PurpleAir API keys may be obtained from PurpleAir. https://community.purpleair.com/t/creating-api-keys/3951 
 - Sensor data are gathered for a "local" region and other regions as defined in constants.py.
-- Sensor Confidence is calculated as the percentage of data discarded after cleaning with EPA criteria and may not match displayed PurpleAir Confidence percentages.
+- Sensor Confidence is calculated as the percentage of data discarded after cleaning with EPA criteria and may not match PurpleAir Confidence percentages.
 - requirements.txt is included for installing the required non-standard Python libraries (i.e., pip: -r requirements.txt)
 - To prevent the Google Sheets document from becoming too large you should periodically archive data to another worksheet and delete data from the master document.
 - You can use the Google Sheets worksheet as source data for a Google Looker Studio dashboard. https://lookerstudio.google.com/ 
@@ -94,8 +94,8 @@
   
 ### Notes:  
   
-- This program merges all Excel files in a directory into a single Excel workbook.
-- The program assumes the file structure begins with the path defined in constants.py followed by a folder in yyyy-mm format.
+- This program merges all Excel or CSV files in a directory into a single Excel workbook.
+- The program assumes the full file path begins with the path defined in constants.py followed by a folder in yyyy-mm format.
 - Files to be excluded are hard coded in exclude_list.
   
 
@@ -106,3 +106,4 @@
 ### Notes:  
   
 - The station to get data from is named in constants.py.
+- Download the required i[Edge Webdriver](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver?form=MA13LH#downloads) and place it in the folder you specified in consants.py.
