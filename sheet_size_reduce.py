@@ -5,8 +5,11 @@ The program will not delete rows from the current month.
 The program will not delete rows from the current year.
 
 Arguments:
-    -m, --month  The number of the month to clean.
-
+    -m, --month     Optional. The number of the month to clean.
+    -d, --days      Optional. The number of days to keep. Default is 21.
+    -s, --sheet     Optional. The name of the sheet to clean. Default is constants.py LOCAL_WORKSHEET_NAME.
+    -a, --all       Optional. Clean all sheets (local and regional).
+    -w, --warnings  Optional. Don't show warnings.
 Returns:
     None
 
