@@ -50,7 +50,7 @@ urllib3_logger.addHandler(file_handler)
 session = requests.Session()
 retry = Retry(total=12, backoff_factor=1.0, status_forcelist=tuple(range(401, 600)))
 adapter = HTTPAdapter(max_retries=retry)
-PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
+PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY_LOG_DATA')
 if PURPLEAIR_READ_KEY == '':
     logger.error('Error: PURPLEAIR_READ_KEY not set in config.ini')
     print('ERROR: PURPLEAIR_READ_KEY not set in config.ini')

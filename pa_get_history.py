@@ -58,7 +58,7 @@ logger.addHandler(file_handler)
 session = requests.Session()
 retry = Retry(total=10, backoff_factor=1.0)
 adapter = HTTPAdapter(max_retries=retry)
-PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY')
+PURPLEAIR_READ_KEY = config.get('purpleair', 'PURPLEAIR_READ_KEY_GET_HISTORY')
 if PURPLEAIR_READ_KEY == '':
     logger.error('Error: PurpleAir API read key not set in config.ini. Exiting.')
     print('Error: PurpleAir API read key not set in config.ini. Exiting.')
