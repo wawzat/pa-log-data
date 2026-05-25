@@ -1,8 +1,16 @@
 gspread
 oauth2client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
 pandas
+pytz
+tzdata
+python-dateutil
 xlsxwriter
 requests
 tabulate
 selenium
 openpyxl
+urllib3
+httplib2
