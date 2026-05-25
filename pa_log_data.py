@@ -536,4 +536,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.exception("UNHANDLED EXCEPTION — program crashed")
+        print("A fatal error occurred. Check pa_log_data_error.log for details.")
+        sys.exit(1)
